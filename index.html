@@ -188,7 +188,7 @@
         // 加载建筑矢量
         async function loadBuildings() {
             try {
-                buildingDataSource = await Cesium.GeoJsonDataSource.load('./public/data/buildings.geojson', {
+                buildingDataSource = await Cesium.GeoJsonDataSource.load('./data/buildings.geojson', {
                     stroke: Cesium.Color.CYAN,
                     strokeWidth: 2,
                     fill: Cesium.Color.CYAN.withAlpha(0.2),
