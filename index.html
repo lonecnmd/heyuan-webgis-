@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>河源三维场景</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; font-family: "Microsoft YaHei", sans-serif; }
+
+        /* 顶部标题栏 */
+        #header {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(90deg, #0a1628, #1a3a5c, #0a1628);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-bottom: 2px solid #00d4ff;
+        }
+        #header h1 {
+            color: #00d4ff;
+            font-size: 24px;
+            letter-spacing: 6px;
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
+        }
+
+        /* 三维场景容器 */
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            padding-top: 60px;
+        }
+
+        /* 左侧信息面板 */
+        #infoPanel {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            width: 280px;
+            background: rgba(10, 22, 40, 0.85);
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            padding: 15px;
+            color: #fff;
+            z-index: 100;
+            display: none;
+        }
+        #infoPanel h3 {
+            color: #00d4ff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,212,255,0.3);
+        }
+        #infoPanel table {
+            width: 100%;
+            font-size: 13px;
+        }
+        #infoPanel table td {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        #infoPanel table td:first-child {
+            color: #00d4ff;
+            width: 70px;
+        }
+        #closePanel {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 18px;
+            background: none;
+            border: none;
+        }
+
+        /* 右下角工具栏 */
+        #toolbar {
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(10, 22, 40, 0.85);
+            border: 1px solid #00d4ff;
+            border-radius: 6px;
+            color: #00d4ff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tool-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        /* 隐藏 Cesium 默认控件 */
+        .cesium-viewer-toolbar,
+        .cesium-viewer-animationContainer,
+        .cesium-viewer-timelineContainer,
+        .cesium-viewer-bottom,
+        .cesium-viewer-fullscreenContainer {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题 -->
+    <div id="header">
+        <h1>河源乡村三维实景展示系统</h1>
+    </div>
+
+    <!-- 左侧信息面板 -->
+    <div id="infoPanel">
+        <button id="closePanel" onclick="closeInfoPanel()">✕</button>
+        <h3 id="buildingName">建筑信息</h3>
+        <table>
+            <tr><td>名称</td><td id="pName">-</td></tr>
+            <tr><td>用途</td><td id="pUsage">-</td></tr>
+            <tr><td>层数</td><td id="pFloors">-</td></tr>
+            <tr><td>面积</td><td id="pArea">-</td></tr>
+            <tr><td>备注</td><td id="pRemark">-</td></tr>
+        </table>
+    </div>
+
+    <!-- 右下角工具按钮 -->
+    <div id="toolbar">
+        <button class="tool-btn" onclick="resetView()" title="复位">🏠</button>
+        <button class="tool-btn" onclick="toggleBuildings()" title="建筑轮廓">🏗</button>
+    </div>
+
+    <!-- 三维场景 -->
+    <div id="cesiumContainer"></div>
+
+    <script>
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4MTZhMjYyMi04N2UyLTRkYTQtYjU1Ni01YTAzNDdkMTg3N2YiLCJpZCI6MjYyMjUwLCJpYXQiOjE3MzQwODUwMjN9.KwolqKTgIWZALmPGVrkP-lrrozvp1lOBvi7ygwJvLIE';
+
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            infoBox: false,
+            selectionIndicator: true,
+            baseLayerPicker: false,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
+            fullscreenButton: false,
+            timeline: false,
+            animation: false
+        });
+
+        let buildingDataSource = null;
+        let modelTileset = null;
+
+        // 加载倾斜摄影模型
+        async function loadModel() {
+            try {
+                modelTileset = await Cesium.Cesium3DTileset.fromIonAssetId(4534110);
+                viewer.scene.primitives.add(modelTileset);
+
+                const heightOffset = -115;
+                const boundingSphere = modelTileset.boundingSphere;
+                const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
+                const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0);
+                const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, heightOffset);
+                const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
+                modelTileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+
+                viewer.zoomTo(modelTileset);
+                console.log('倾斜摄影模型加载成功！');
+            } catch (error) {
+                console.log('模型加载失败：', error);
+            }
+        }
+
+        // 加载建筑矢量
+        async function loadBuildings() {
+            try {
+                buildingDataSource = await Cesium.GeoJsonDataSource.load('./public/data/buildings.geojson', {
+                    stroke: Cesium.Color.CYAN,
+                    strokeWidth: 2,
+                    fill: Cesium.Color.CYAN.withAlpha(0.2),
+                    clampToGround: true
+                });
+                viewer.dataSources.add(buildingDataSource);
+                console.log('建筑矢量加载成功！');
+            } catch (error) {
+                console.log('建筑矢量加载失败：', error);
+            }
+        }
+
+        // 点击建筑显示信息面板
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function (click) {
+            const picked = viewer.scene.pick(click.position);
+            if (Cesium.defined(picked) && picked.id && picked.id.properties) {
+                const props = picked.id.properties;
+                document.getElementById('buildingName').textContent =
+                    props['Name'] ? props['Name'].getValue() : '未命名建筑';
+                document.getElementById('pName').textContent =
+                    props['Name'] ? props['Name'].getValue() : '-';
+                document.getElementById('pUsage').textContent =
+                    props['Usage'] ? props['Usage'].getValue() : '-';
+                document.getElementById('pFloors').textContent =
+                    props['Floors'] ? props['Floors'].getValue() : '-';
+                document.getElementById('pArea').textContent =
+                    props['Area_sqm'] ? props['Area_sqm'].getValue() : '-';
+                document.getElementById('pRemark').textContent =
+                    props['Remark'] ? props['Remark'].getValue() : '-';
+                document.getElementById('infoPanel').style.display = 'block';
+            } else {
+                document.getElementById('infoPanel').style.display = 'none';
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        // 关闭信息面板
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').style.display = 'none';
+        }
+
+        // 复位视角
+        function resetView() {
+            if (modelTileset) {
+                viewer.zoomTo(modelTileset);
+            }
+        }
+
+        // 切换建筑轮廓显隐
+        let buildingsVisible = true;
+        function toggleBuildings() {
+            if (buildingDataSource) {
+                buildingsVisible = !buildingsVisible;
+                buildingDataSource.show = buildingsVisible;
+            }
+        }
+
+        loadModel();
+        loadBuildings();
+    </script>
+</body>
+</html>
