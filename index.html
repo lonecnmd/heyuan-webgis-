@@ -585,8 +585,8 @@
       <div class="parking-row"><span class="label">🚗 总车位</span><span class="value v-blue">150</span></div>
       <div class="parking-row"><span class="label">🔴 已用车位</span><span class="value v-orange">87</span></div>
       <div class="parking-row"><span class="label">🟢 空闲车位</span><span class="value v-green">63</span></div>
-      <div class="parking-row"><span class="label">🛵 摩托车位</span><span class="value v-blue">40</span></div>
       <div class="parking-row"><span class="label">🛩 停机位</span><span class="value v-blue">6</span></div>
+      <div class="parking-row"><span class="label">🛵 摩托车位</span><span class="value v-blue">40</span></div>
       <div class="park-bar-bg"><div class="park-bar-fill" id="parkFill"></div></div>
     </div>
 
@@ -744,7 +744,7 @@
 
     async function loadModel(){
       try{
-        modelTileset = await Cesium.Cesium3DTileset.fromUrl('./public/tileset/tileset.json');
+        modelTileset = await Cesium.Cesium3DTileset.fromIonAssetId(4533936); 
         viewer.scene.primitives.add(modelTileset);
 
         const heightOffset = -115;
