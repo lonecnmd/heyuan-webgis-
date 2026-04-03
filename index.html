@@ -747,7 +747,7 @@
         modelTileset = await Cesium.Cesium3DTileset.fromUrl('./public/tileset/tileset.json');
         viewer.scene.primitives.add(modelTileset);
 
-        const heightOffset = 115;
+        const heightOffset = -115;
         const bs = modelTileset.boundingSphere;
         const c = Cesium.Cartographic.fromCartesian(bs.center);
         const surface = Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, 0);
