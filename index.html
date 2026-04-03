@@ -1,253 +1,925 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <title>河源三维场景</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; font-family: "Microsoft YaHei", sans-serif; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>洋潭村数字乡村三维实景展示平台</title>
 
-        /* 顶部标题栏 */
-        #header {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 60px;
-            background: linear-gradient(90deg, #0a1628, #1a3a5c, #0a1628);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            border-bottom: 2px solid #00d4ff;
-        }
-        #header h1 {
-            color: #00d4ff;
-            font-size: 24px;
-            letter-spacing: 6px;
-            text-shadow: 0 0 10px rgba(0,212,255,0.5);
-        }
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
-        /* 三维场景容器 */
-        #cesiumContainer {
-            width: 100%;
-            height: 100%;
-            padding-top: 60px;
-        }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; font-family:"Microsoft YaHei", sans-serif; background:#040e1e; }
 
-        /* 左侧信息面板 */
-        #infoPanel {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            width: 280px;
-            background: rgba(10, 22, 40, 0.85);
-            border: 1px solid #00d4ff;
-            border-radius: 8px;
-            padding: 15px;
-            color: #fff;
-            z-index: 100;
-            display: none;
-        }
-        #infoPanel h3 {
-            color: #00d4ff;
-            font-size: 16px;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(0,212,255,0.3);
-        }
-        #infoPanel table {
-            width: 100%;
-            font-size: 13px;
-        }
-        #infoPanel table td {
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        #infoPanel table td:first-child {
-            color: #00d4ff;
-            width: 70px;
-        }
-        #closePanel {
-            position: absolute;
-            top: 8px;
-            right: 10px;
-            color: #00d4ff;
-            cursor: pointer;
-            font-size: 18px;
-            background: none;
-            border: none;
-        }
+    /* ========= Cesium ========= */
+    #cesiumContainer{ width:100%; height:100%; }
 
-        /* 右下角工具栏 */
-        #toolbar {
-            position: absolute;
-            bottom: 40px;
-            right: 20px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .tool-btn {
-            width: 40px;
-            height: 40px;
-            background: rgba(10, 22, 40, 0.85);
-            border: 1px solid #00d4ff;
-            border-radius: 6px;
-            color: #00d4ff;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .tool-btn:hover {
-            background: rgba(0, 212, 255, 0.2);
-        }
+    /* ========= 顶部标题栏（保持之前风格）========= */
+    #header{
+      position:absolute; top:0; left:0;
+      width:100%; height:80px;
+      background: linear-gradient(180deg, rgba(4,14,30,0.98) 0%, rgba(4,14,30,0.6) 80%, transparent 100%);
+      z-index:200;
+      padding:12px 30px 0;
+      pointer-events:none;
+    }
+    #header::after{
+      content:'';
+      position:absolute; bottom:10px; left:50%;
+      transform:translateX(-50%);
+      width:70%; height:1px;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.35), rgba(0,180,255,0.75), rgba(0,212,255,0.35), transparent);
+    }
+    #header .left-info, #header .center-title, #header .right-info{
+      pointer-events:auto;
+      position:absolute; top:12px;
+    }
+    #header .left-info{
+      left:30px;
+      color: rgba(160,200,230,0.9);
+      font-size: 13px;
+      display:flex; align-items:center; gap:12px;
+    }
+    #header .left-info .loc{ color: rgba(0,212,255,0.9); }
+    #header .left-info .weather{
+      color:#f0c040;
+      background: linear-gradient(135deg, rgba(240,192,64,0.1), rgba(240,192,64,0.05));
+      padding:2px 10px; border-radius:10px;
+    }
 
-        /* 隐藏 Cesium 默认控件 */
-        .cesium-viewer-toolbar,
-        .cesium-viewer-animationContainer,
-        .cesium-viewer-timelineContainer,
-        .cesium-viewer-bottom,
-        .cesium-viewer-fullscreenContainer {
-            display: none !important;
-        }
-    </style>
+    #header .center-title{
+      left:50%; transform: translateX(-50%);
+      text-align:center;
+    }
+    #header .center-title h1{
+      font-size:30px; letter-spacing:10px;
+      background: linear-gradient(180deg, #a0e8ff 0%, #00b4ff 50%, #0068c8 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      filter: drop-shadow(0 0 20px rgba(0,180,255,0.3));
+    }
+    #header .center-title .subtitle{
+      color: rgba(100,180,220,0.7);
+      font-size: 13px; letter-spacing: 5px; margin-top: 2px;
+    }
+
+    #header .right-info{
+      right:30px; text-align:right;
+    }
+    #header .right-info .date{ font-size:13px; color: rgba(140,180,210,0.7); }
+    #header .right-info .time{
+      font-family:'Orbitron', monospace;
+      font-size:24px;
+      background: linear-gradient(180deg, #80dfff, #0090e0);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    /* ========= 顶部按钮 ========= */
+    #topBar{
+      position:absolute; top:80px; left:25px;
+      display:flex; gap:8px; z-index:200;
+    }
+    .top-btn{
+      padding:5px 16px;
+      background: linear-gradient(135deg, rgba(0,120,200,0.25), rgba(0,60,120,0.15));
+      backdrop-filter: blur(8px);
+      border:none;
+      border-radius:15px;
+      color: rgba(0,200,255,0.85);
+      font-size:12px;
+      cursor:pointer;
+      transition: all .3s;
+    }
+    .top-btn:hover{
+      background: linear-gradient(135deg, rgba(0,150,255,0.4), rgba(0,80,160,0.3));
+        color:#fff;
+      box-shadow: 0 0 15px rgba(0,150,255,0.3);
+    }
+
+    /* ========= 左右面板总体布局（保证显示全） ========= */
+    :root{
+      --panel-w: 310px;
+      --gap: 10px;
+      --panel-top: 108px;
+      --panel-bottom: 88px; /* 底部模块 */
+      --service-h: 200px;   /* 你指定：周边服务 */
+      --fish-h: 250px;      /* 鱼池面板高度（可再调） */
+      --park-h: 170px;      /* 停车面板 */
+      --record-h: 300px;    /* 你指定：出入记录 */
+      --today-h: 170px;     /* 今日数据 */
+    }
+
+    #leftPanel, #rightPanel{
+      position:absolute;
+      top: var(--panel-top);
+      bottom: var(--panel-bottom);
+      width: var(--panel-w);
+      z-index:120;
+      display:flex;
+      flex-direction:column;
+      gap: var(--gap);
+      overflow:hidden;
+    }
+    #leftPanel{ left: 15px; }
+    #rightPanel{ right: 15px; }
+
+    /* ========= 面板通用：左右背景图 + 底部透明渐隐 ========= */
+    .panel{
+      position:relative;
+      border-radius: 12px;
+      padding: 14px 16px;
+      overflow:hidden;
+      color: rgba(230,245,255,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+    .panel.left::before,
+    .panel.right::before{
+      content:'';
+      position:absolute; inset:0;
+      background-position: center;
+      background-repeat:no-repeat;
+      background-size: 100% 100%;  /* 关键：让素材铺满，避免“尺寸不对” */
+      opacity: 0.92;
+      z-index:0;
+    }
+    .panel.left::before{ background-image: url('./public/images/title_left_bg.png'); }
+    .panel.right::before{ background-image: url('./public/images/title_right_bg.png'); }
+
+    /* 下方透明（底下更透明） */
+    .panel::after{
+      content:'';
+      position:absolute; inset:0;
+      background: linear-gradient(180deg,
+        rgba(4,14,30,0.06) 0%,
+        rgba(4,14,30,0.10) 52%,
+        rgba(4,14,30,0.55) 85%,
+        rgba(4,14,30,0.88) 100%);
+      z-index:0;
+    }
+    .panel > *{ position:relative; z-index:1; }
+
+    .panel-title{
+      display:flex; align-items:center; gap:10px;
+      font-size:14px; font-weight:800;
+      margin-bottom: 10px;
+      letter-spacing:1px;
+      background: linear-gradient(90deg, #7be7ff, #00a8ff, #2b7bff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      filter: drop-shadow(0 0 10px rgba(0,180,255,0.12));
+      user-select:none;
+    }
+    .panel-title .dot{
+      width:8px; height:8px; border-radius:50%;
+      background:#00d7ff;
+      box-shadow: 0 0 8px rgba(0,215,255,0.75);
+      flex-shrink:0;
+    }
+    .title-right{
+      margin-left:auto;
+      font-size:12px;
+      font-weight:700;
+      color: rgba(220,240,255,0.75);
+      -webkit-text-fill-color: initial; /* 避免被渐变文字影响 */
+      background: none;
+    }
+
+    /* ========= 各面板高度分配 ========= */
+    #pService { height: var(--service-h); }
+    #pFish    { height: var(--fish-h); }
+    #pVillage { height: calc(100% - var(--service-h) - var(--fish-h) - (2 * var(--gap))); }
+
+    #pPark    { height: var(--park-h); }
+    #pRecord  { height: var(--record-h); }
+    #pToday   { height: var(--today-h); }
+    #pTrend   { height: calc(100% - var(--park-h) - var(--record-h) - var(--today-h) - (3 * var(--gap))); }
+
+    /* ========= 周边服务：缩小图标/文字 ========= */
+    .service-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+    .service-item{
+      border-radius:10px;
+      padding: 8px 6px 9px;
+      background: rgba(0,0,0,0.10);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      text-align:center;
+    }
+    .service-item .icon-img{
+      width:24px; height:24px; object-fit:contain;
+      filter: drop-shadow(0 0 6px rgba(0,180,255,0.22));
+    }
+    .service-item .num{
+      margin-top:5px;
+      font-size:18px; font-weight:900;
+      font-family:'Orbitron', monospace;
+      background: linear-gradient(180deg, #8df2ff, #00b0ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      line-height: 1.0;
+    }
+    .service-item .label{
+      margin-top:2px;
+      font-size:10px;
+      color: rgba(190,225,250,0.70);
+      letter-spacing:1px;
+    }
+
+    /* ========= 鱼池：动态轮播（四个指标） ========= */
+    .fish-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .fish-item{
+      border-radius:10px;
+      padding: 9px 8px;
+      background: rgba(0,0,0,0.10);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      text-align:center;
+    }
+    .fish-item .label{ font-size:10px; color: rgba(190,235,220,0.72); }
+    .fish-item .value{
+      margin-top:3px;
+      font-size:18px;
+      font-weight:900;
+      font-family:'Orbitron', monospace;
+      background: linear-gradient(180deg, #8fffe0, #00d08a);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      line-height: 1.0;
+    }
+    .fish-item .unit{ font-size:10px; color: rgba(160,230,210,0.60); margin-left:3px; }
+    .chart-box{ width:100%; height: 105px; margin-top:8px; } /* 控制高度避免溢出 */
+
+    /* ========= 村庄概况 ========= */
+    .village-stats{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 10px;
+      font-size: 12px;
+    }
+    .village-stats .item{
+      color: rgba(190,225,250,0.72);
+      display:flex; align-items:center; gap:6px;
+      font-size: 11px;
+    }
+    .village-stats .item b{
+      color: rgba(0,220,255,0.92);
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+    }
+    .village-desc{
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      font-size: 10px;
+      line-height: 1.6;
+      color: rgba(200,230,250,0.55);
+    }
+    #chartLandUse{ height: 115px; margin-top: 8px; }
+
+    /* ========= 停车信息 ========= */
+    .parking-row{
+      display:flex; justify-content:space-between; align-items:center;
+      padding: 6px 2px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+    }
+    .parking-row:last-child{ border-bottom:none; }
+    .parking-row .label{ color: rgba(200,230,250,0.70); }
+    .parking-row .value{
+      font-size: 18px; font-weight: 900;
+      font-family:'Orbitron', monospace;
+      background: linear-gradient(180deg, #8df2ff, #00b0ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      line-height: 1.0;
+    }
+    .park-bar-bg{
+      width:100%; height: 8px; border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      margin-top: 8px; overflow:hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .park-bar-fill{
+      height:100%;
+      width:58%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0068ff, #00c8ff, #00f0c8);
+      box-shadow: 0 0 18px rgba(0,200,255,0.25);
+      transition: width 1s ease;
+    }
+
+    /* ========= 出入记录 ========= */
+    .record-wrap{
+      height: calc(100% - 26px);
+      overflow:hidden;
+    }
+    .record-table{ width:100%; border-collapse:collapse; font-size: 10px; }
+    .record-table thead th{
+      color: rgba(0,210,255,0.75);
+      text-align:left;
+      padding: 6px 4px 7px;
+      font-weight: 800;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+    }
+    .record-table tbody td{
+      color: rgba(220,240,255,0.75);
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .record-table tbody tr{ height: 28px; }
+    #recordBody{
+      display:block;
+      will-change: transform;
+      transform: translateY(0);
+      transition: transform 0.55s ease;
+    }
+    .record-table thead, .record-table tbody tr{
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    .record-table tbody{ display:block; }
+
+    /* ========= 今日数据 ========= */
+    .stat-grid{
+      display:grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 8px;
+    }
+    .stat-card{
+      border-radius:10px;
+      padding: 9px 8px 10px;
+      background: rgba(0,0,0,0.10);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      text-align:center;
+    }
+    .stat-card .label{ font-size:10px; color: rgba(200,230,250,0.70); }
+    .stat-card .value{
+      margin-top:4px;
+      font-size:18px;
+      font-weight:900;
+      font-family:'Orbitron', monospace;
+      line-height: 1.0;
+    }
+    .v-blue  { background: linear-gradient(180deg, #8df2ff, #00b0ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .v-green { background: linear-gradient(180deg, #8fffe0, #00d08a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .v-orange{ background: linear-gradient(180deg, #ffe9a0, #ffb000); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .v-red   { background: linear-gradient(180deg, #ffb3b3, #ff5b6b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    /* ========= 趋势图 ========= */
+    #chartVisitor{ height: calc(100% - 26px); }
+
+    /* ========= 底部模块 ========= */
+    #bottomBar{
+      position:absolute;
+      bottom:15px; left:50%;
+      transform: translateX(-50%);
+      z-index:200;
+      display:flex; gap:4px;
+      background: linear-gradient(160deg, rgba(8,25,50,0.78), rgba(4,14,30,0.72));
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 8px 12px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+    }
+    .module-btn{
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      width:72px; height:58px;
+      background: transparent;
+      border:none;
+      border-radius: 10px;
+      cursor:pointer;
+      transition: all .3s;
+      color: rgba(140,190,220,0.6);
+    }
+    .module-btn:hover{
+      background: rgba(0,200,255,0.10);
+      transform: translateY(-4px);
+    }
+    .module-btn .icon{ font-size:22px; transition: all .3s; }
+    .module-btn:hover .icon{ transform: scale(1.15); filter: drop-shadow(0 0 6px rgba(0,180,255,0.5)); }
+    .module-btn .text{ font-size: 10px; margin-top:4px; transition: all .3s; }
+    .module-btn:hover .text{ color: rgba(0,210,255,0.9); }
+
+    /* ========= 建筑信息弹窗 ========= */
+    #infoPanel{
+      position:absolute;
+      top:50%; left:50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      background: linear-gradient(160deg, rgba(8,30,60,0.92), rgba(4,14,30,0.90));
+      backdrop-filter: blur(15px);
+      border-radius: 14px;
+      padding: 20px;
+      color: #fff;
+      z-index: 250;
+      display: none;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+    #infoPanel h3{
+      font-size:16px; margin-bottom:14px; padding-bottom:10px;
+      background: linear-gradient(90deg, #7be7ff, #00a8ff, #2b7bff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    #infoPanel table{ width:100%; font-size:13px; }
+    #infoPanel table td{ padding:7px 0; border-bottom: 1px solid rgba(255,255,255,0.10); }
+    #infoPanel table td:first-child{ color: rgba(0,190,255,0.7); width:55px; font-size:12px; }
+    #closePanel{
+      position:absolute; top:12px; right:14px;
+      color: rgba(0,190,255,0.6);
+      cursor:pointer;
+      font-size:18px;
+      background:none; border:none;
+      transition: all .3s;
+    }
+    #closePanel:hover{ color:#fff; transform: rotate(90deg); }
+    .btn-minsu{
+      margin-top:14px; width:100%;
+      padding:8px;
+      background: rgba(0,200,255,0.14);
+      border:none;
+      border-radius: 10px;
+      color: rgba(0,235,255,0.95);
+      font-size: 12px;
+      cursor:pointer;
+    }
+
+    /* ========= 隐藏 Cesium 默认控件 ========= */
+    .cesium-viewer-toolbar,
+    .cesium-viewer-animationContainer,
+    .cesium-viewer-timelineContainer,
+    .cesium-viewer-bottom,
+    .cesium-viewer-fullscreenContainer,
+    .cesium-viewer-infoBoxContainer{
+      display:none !important;
+    }
+
+        /* 你现有的最后一段CSS... */
+    .cesium-viewer-infoBoxContainer{
+      display:none !important;
+    }
+
+    /* ===== 在这里粘贴新的角落贴图CSS ===== */
+    .panel.left::before{
+      content:'';
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: 20%;
+      height: 10%;
+      background: url('./public/images/title_left_bg.png') no-repeat left top;
+      background-size: contain;
+      opacity: 0.95;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .panel.right::before{
+      content:'';
+      position:absolute;
+      right: 0;
+      bottom: 0;
+      width: 10%;
+      height: 10%;
+      background: url('./public/images/title_right_bg.png') no-repeat right bottom;
+      background-size: contain;
+      opacity: 0.95;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+
+
+  </style>
 </head>
+
 <body>
-    <!-- 顶部标题 -->
-    <div id="header">
-        <h1>河源乡村三维实景展示系统</h1>
+  <div id="header">
+    <div class="left-info">
+      <span class="loc">📍 东源县</span>
+      <span class="weather" id="weatherInfo">☀ 28°C 晴</span>
+    </div>
+    <div class="center-title">
+      <h1>枕水渔"十" · 万绿归宿</h1>
+      <div class="subtitle">洋潭村数字乡村三维实景展示平台</div>
+    </div>
+    <div class="right-info">
+      <div class="date" id="dateInfo"></div>
+      <div class="time" id="timeInfo"></div>
+    </div>
+  </div>
+
+  <div id="topBar">
+    <button class="top-btn" onclick="togglePanels()">🔲 隐藏面板</button>
+    <button class="top-btn" onclick="resetView()">🏠 复位视角</button>
+    <button class="top-btn" onclick="toggleBuildings()">📌 建筑标注</button>
+  </div>
+
+  <!-- 左侧 -->
+  <div id="leftPanel">
+    <div class="panel left" id="pService">
+      <div class="panel-title"><span class="dot"></span>周边服务</div>
+      <div class="service-grid">
+        <div class="service-item"><img class="icon-img" src="./public/images/canyin.png" alt="餐饮"><div class="num">4</div><div class="label">餐饮</div></div>
+        <div class="service-item"><img class="icon-img" src="./public/images/jiaoyu.png" alt="教育"><div class="num">3</div><div class="label">教育</div></div>
+        <div class="service-item"><img class="icon-img" src="./public/images/yiliao.png" alt="医疗"><div class="num">2</div><div class="label">医疗</div></div>
+        <div class="service-item"><img class="icon-img" src="./public/images/gongan.png" alt="公安"><div class="num">1</div><div class="label">公安</div></div>
+        <div class="service-item"><img class="icon-img" src="./public/images/qiye.png" alt="企业"><div class="num">6</div><div class="label">企业</div></div>
+        <div class="service-item"><img class="icon-img" src="./public/images/yule.png" alt="娱乐"><div class="num">2</div><div class="label">娱乐</div></div>
+      </div>
     </div>
 
-    <!-- 左侧信息面板 -->
-    <div id="infoPanel">
-        <button id="closePanel" onclick="closeInfoPanel()">✕</button>
-        <h3 id="buildingName">建筑信息</h3>
-        <table>
-            <tr><td>名称</td><td id="pName">-</td></tr>
-            <tr><td>用途</td><td id="pUsage">-</td></tr>
-            <tr><td>层数</td><td id="pFloors">-</td></tr>
-            <tr><td>面积</td><td id="pArea">-</td></tr>
-            <tr><td>备注</td><td id="pRemark">-</td></tr>
+    <div class="panel left" id="pFish">
+      <div class="panel-title">
+        <span class="dot"></span>鱼池实时监测
+        <span class="title-right" id="pondName">-</span>
+      </div>
+      <div class="fish-grid">
+        <div class="fish-item"><div class="label">水温</div><div class="value"><span id="pondTemp">-</span><span class="unit">°C</span></div></div>
+        <div class="fish-item"><div class="label">水质(DO)</div><div class="value"><span id="pondDo">-</span><span class="unit">mg/L</span></div></div>
+        <div class="fish-item"><div class="label">鱼类存量</div><div class="value"><span id="pondFish">-</span><span class="unit">尾</span></div></div>
+        <div class="fish-item"><div class="label">今日垂钓</div><div class="value"><span id="pondAnglers">-</span><span class="unit">人</span></div></div>
+      </div>
+      <div id="chartWaterTemp" class="chart-box"></div>
+    </div>
+
+    <div class="panel left" id="pVillage">
+      <div class="panel-title"><span class="dot"></span>村庄概况</div>
+      <div class="village-stats">
+        <div class="item">📐 总面积：<b>8</b> km²</div>
+        <div class="item">👥 人口：<b>1200</b> 人</div>
+        <div class="item">🏠 户数：<b>320</b> 户</div>
+        <div class="item">🌾 耕地：<b>680</b> 亩</div>
+        <div class="item">💧 水域：<b>1200</b> 亩</div>
+        <div class="item">🎣 钓位：<b>120</b> 个</div>
+      </div>
+      <div class="village-desc">
+        洋潭村位于东源县涧头镇东南部、万绿湖上游，拥有600年历史的古村落，为省级“百千万工程”典型培育村。依托万绿湖5A级生态资源与河源首家省级标准垂钓竞赛基地，打造垂钓小镇·渔村民宿集群·农文旅融合示范区。
+      </div>
+      <div id="chartLandUse" class="chart-box"></div>
+    </div>
+  </div>
+
+  <!-- 右侧 -->
+  <div id="rightPanel">
+    <div class="panel right" id="pPark">
+      <div class="panel-title"><span class="dot"></span>停车信息</div>
+      <div class="parking-row"><span class="label">🚗 总车位</span><span class="value v-blue">150</span></div>
+      <div class="parking-row"><span class="label">🔴 已用车位</span><span class="value v-orange">87</span></div>
+      <div class="parking-row"><span class="label">🟢 空闲车位</span><span class="value v-green">63</span></div>
+      <div class="parking-row"><span class="label">🛵 摩托车位</span><span class="value v-blue">40</span></div>
+      <div class="parking-row"><span class="label">🛩 停机位</span><span class="value v-blue">6</span></div>
+      <div class="park-bar-bg"><div class="park-bar-fill" id="parkFill"></div></div>
+    </div>
+
+    <div class="panel right" id="pRecord">
+      <div class="panel-title"><span class="dot"></span>出入记录</div>
+      <div class="record-wrap">
+        <table class="record-table">
+          <thead><tr><th>车牌号</th><th>类型</th><th>时间</th><th>通道</th></tr></thead>
+          <tbody id="recordBody"></tbody>
         </table>
+      </div>
     </div>
 
-    <!-- 右下角工具按钮 -->
-    <div id="toolbar">
-        <button class="tool-btn" onclick="resetView()" title="复位">🏠</button>
-        <button class="tool-btn" onclick="toggleBuildings()" title="建筑轮廓">🏗</button>
+    <div class="panel right" id="pToday">
+      <div class="panel-title"><span class="dot"></span>今日数据</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">今日游客</div><div class="value v-blue">156</div></div>
+        <div class="stat-card"><div class="label">入住民宿</div><div class="value v-green">12</div></div>
+        <div class="stat-card"><div class="label">垂钓预约</div><div class="value v-orange">28</div></div>
+        <div class="stat-card"><div class="label">今日收入</div><div class="value v-red">3.2<span style="font-size:12px">万</span></div></div>
+      </div>
     </div>
 
-    <!-- 三维场景 -->
-    <div id="cesiumContainer"></div>
+    <div class="panel right" id="pTrend">
+      <div class="panel-title"><span class="dot"></span>月度游客趋势</div>
+      <div id="chartVisitor" class="chart-box"></div>
+    </div>
+  </div>
 
-    <script>
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4MTZhMjYyMi04N2UyLTRkYTQtYjU1Ni01YTAzNDdkMTg3N2YiLCJpZCI6MjYyMjUwLCJpYXQiOjE3MzQwODUwMjN9.KwolqKTgIWZALmPGVrkP-lrrozvp1lOBvi7ygwJvLIE';
+  <!-- 建筑弹窗 -->
+  <div id="infoPanel">
+    <button id="closePanel" onclick="closeInfoPanel()">✕</button>
+    <h3 id="buildingName">建筑信息</h3>
+    <table>
+      <tr><td>名称</td><td id="pName">-</td></tr>
+      <tr><td>用途</td><td id="pUsage">-</td></tr>
+      <tr><td>层数</td><td id="pFloors">-</td></tr>
+      <tr><td>面积</td><td id="pArea">-</td></tr>
+      <tr><td>备注</td><td id="pRemark">-</td></tr>
+    </table>
+    <button class="btn-minsu" id="btnMinsu" style="display:none" onclick="goToMinsu()">🏡 查看民宿详情 →</button>
+  </div>
 
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-            infoBox: false,
-            selectionIndicator: true,
-            baseLayerPicker: false,
-            geocoder: false,
-            homeButton: false,
-            sceneModePicker: false,
-            navigationHelpButton: false,
-            fullscreenButton: false,
-            timeline: false,
-            animation: false
+  <!-- 底部模块 -->
+  <div id="bottomBar">
+    <button class="module-btn" onclick="showModule('概况')"><div class="icon">🏘</div><div class="text">村庄概况</div></button>
+    <button class="module-btn" onclick="showModule('党建')"><div class="icon">🚩</div><div class="text">党政建设</div></button>
+    <button class="module-btn" onclick="showModule('垂钓')"><div class="icon">🎣</div><div class="text">垂钓赛事</div></button>
+    <button class="module-btn" onclick="showModule('民宿')"><div class="icon">🏡</div><div class="text">渔村民宿</div></button>
+    <button class="module-btn" onclick="showModule('招商')"><div class="icon">🤝</div><div class="text">招商服务</div></button>
+    <button class="module-btn" onclick="showModule('经济')"><div class="icon">📈</div><div class="text">经济运行</div></button>
+    <button class="module-btn" onclick="showModule('文旅')"><div class="icon">🌊</div><div class="text">农文旅游</div></button>
+    <button class="module-btn" onclick="showModule('生态')"><div class="icon">🌿</div><div class="text">生态监测</div></button>
+  </div>
+
+  <div id="cesiumContainer"></div>
+
+  <script>
+    // ====== 时间 ======
+    function updateTime(){
+      const now = new Date();
+      const w = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+      document.getElementById('dateInfo').textContent =
+        now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 '+w[now.getDay()];
+      document.getElementById('timeInfo').textContent =
+        String(now.getHours()).padStart(2,'0')+':'+
+        String(now.getMinutes()).padStart(2,'0')+':'+
+        String(now.getSeconds()).padStart(2,'0');
+    }
+    updateTime();
+    setInterval(updateTime,1000);
+
+    // ====== 图表：水温趋势（示例） ======
+    const chartWT = echarts.init(document.getElementById('chartWaterTemp'));
+    chartWT.setOption({
+      grid:{ left:35, right:10, top:10, bottom:16 },
+      xAxis:{ type:'category', data:['6:00','9:00','12:00','15:00','18:00','21:00'],
+        axisLine:{lineStyle:{color:'rgba(255,255,255,0.20)'}},
+        axisLabel:{color:'rgba(220,240,255,0.60)',fontSize:9}
+      },
+      yAxis:{ type:'value', min:18, max:28,
+        splitLine:{lineStyle:{color:'rgba(255,255,255,0.12)'}},
+        axisLabel:{color:'rgba(220,240,255,0.60)',fontSize:9}
+      },
+      series:[{
+        data:[19.2,21.5,24.8,25.2,23.5,20.8],
+        type:'line', smooth:true,
+        lineStyle:{color:'#00e8c8',width:2},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+          {offset:0,color:'rgba(0,232,200,0.28)'},{offset:1,color:'rgba(0,232,200,0)'}
+        ])},
+        symbol:'circle', symbolSize:4,
+        itemStyle:{color:'#00ffd0',borderColor:'#00e8c8'}
+      }]
+    });
+
+    // 土地利用（示例）
+    const chartLU = echarts.init(document.getElementById('chartLandUse'));
+    chartLU.setOption({
+      series:[{
+        type:'pie', radius:['40%','65%'], center:['50%','50%'],
+        label:{color:'rgba(220,240,255,0.70)',fontSize:10,formatter:'{b}\n{d}%'},
+        labelLine:{lineStyle:{color:'rgba(255,255,255,0.20)'}},
+        data:[
+          {value:680, name:'耕地'},
+          {value:1200,name:'水域'},
+          {value:800, name:'林地'},
+          {value:320, name:'建设用地'}
+        ]
+      }]
+    });
+
+    // 月度游客（示例）
+    const chartV = echarts.init(document.getElementById('chartVisitor'));
+    chartV.setOption({
+      grid:{ left:35, right:10, top:10, bottom:16 },
+      xAxis:{ type:'category', data:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        axisLine:{lineStyle:{color:'rgba(255,255,255,0.20)'}},
+        axisLabel:{color:'rgba(220,240,255,0.60)',fontSize:8}
+      },
+      yAxis:{ type:'value',
+        splitLine:{lineStyle:{color:'rgba(255,255,255,0.12)'}},
+        axisLabel:{color:'rgba(220,240,255,0.60)',fontSize:9}
+      },
+      series:[{
+        data:[320,280,450,680,920,1100,1450,1380,1050,780,520,380],
+        type:'bar',
+        itemStyle:{
+          color:new echarts.graphic.LinearGradient(0,0,0,1,[
+            {offset:0,color:'rgba(0,220,255,0.85)'},
+            {offset:1,color:'rgba(0,80,180,0.12)'}
+          ]),
+          borderRadius:[8,8,0,0]
+        },
+        barWidth:'52%'
+      }]
+    });
+
+    window.addEventListener('resize',()=>{ chartWT.resize(); chartLU.resize(); chartV.resize(); });
+
+    // ====== Cesium 初始化 ======
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4MTZhMjYyMi04N2UyLTRkYTQtYjU1Ni01YTAzNDdkMTg3N2YiLCJpZCI6MjYyMjUwLCJpYXQiOjE3MzQwODUwMjN9.KwolqKTgIWZALmPGVrkP-lrrozvp1lOBvi7ygwJvLIE';
+
+    const viewer = new Cesium.Viewer('cesiumContainer',{
+      infoBox:false, selectionIndicator:true,
+      baseLayerPicker:false, geocoder:false,
+      homeButton:false, sceneModePicker:false,
+      navigationHelpButton:false, fullscreenButton:false,
+      timeline:false, animation:false
+    });
+
+    let buildingDataSource = null;
+    let modelTileset = null;
+    let panelsVisible = true;
+
+    async function loadModel(){
+      try{
+        modelTileset = await Cesium.Cesium3DTileset.fromUrl('./public/tileset/tileset.json');
+        viewer.scene.primitives.add(modelTileset);
+
+        const heightOffset = 115;
+        const bs = modelTileset.boundingSphere;
+        const c = Cesium.Cartographic.fromCartesian(bs.center);
+        const surface = Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, 0);
+        const offset  = Cesium.Cartesian3.fromRadians(c.longitude, c.latitude, heightOffset);
+        const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
+        modelTileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+
+        viewer.zoomTo(modelTileset);
+      }catch(e){
+        console.log('模型加载失败：', e);
+      }
+    }
+
+    async function loadBuildings(){
+      try{
+        buildingDataSource = await Cesium.GeoJsonDataSource.load('./public/data/buildings.geojson',{
+          stroke: Cesium.Color.fromCssColorString('rgba(0,220,255,0.6)'),
+          strokeWidth: 2,
+          fill: Cesium.Color.fromCssColorString('rgba(0,180,255,0.10)'),
+          clampToGround: true
         });
+        viewer.dataSources.add(buildingDataSource);
+      }catch(e){
+        console.log('建筑矢量加载失败：', e);
+      }
+    }
 
-        let buildingDataSource = null;
-        let modelTileset = null;
+    // 点击建筑显示信息
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction(function(click){
+      const picked = viewer.scene.pick(click.position);
+      if(Cesium.defined(picked) && picked.id && picked.id.properties){
+        const p = picked.id.properties;
+        const name  = p['Name'] ? p['Name'].getValue() : '未命名';
+        const usage = p['Usage'] ? p['Usage'].getValue() : '-';
 
-        // 加载倾斜摄影模型
-        async function loadModel() {
-            try {
-                modelTileset = await Cesium.Cesium3DTileset.fromIonAssetId(4534110);
-                viewer.scene.primitives.add(modelTileset);
+        document.getElementById('buildingName').textContent = name;
+        document.getElementById('pName').textContent = name;
+        document.getElementById('pUsage').textContent = usage;
+        document.getElementById('pFloors').textContent = p['Floors'] ? p['Floors'].getValue() : '-';
+        document.getElementById('pArea').textContent   = p['Area_sqm'] ? p['Area_sqm'].getValue() : '-';
+        document.getElementById('pRemark').textContent = p['Remark'] ? p['Remark'].getValue() : '-';
 
-                const heightOffset = -115;
-                const boundingSphere = modelTileset.boundingSphere;
-                const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
-                const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0);
-                const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, heightOffset);
-                const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
-                modelTileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+        document.getElementById('btnMinsu').style.display = (usage === '居住' || usage === '商业') ? 'block' : 'none';
+        document.getElementById('infoPanel').style.display = 'block';
+      }else{
+        document.getElementById('infoPanel').style.display = 'none';
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-                viewer.zoomTo(modelTileset);
-                console.log('倾斜摄影模型加载成功！');
-            } catch (error) {
-                console.log('模型加载失败：', error);
-            }
+    function closeInfoPanel(){ document.getElementById('infoPanel').style.display = 'none'; }
+    function resetView(){ if(modelTileset) viewer.zoomTo(modelTileset); }
+    let buildingsVisible = true;
+    function toggleBuildings(){
+      if(buildingDataSource){
+        buildingsVisible = !buildingsVisible;
+        buildingDataSource.show = buildingsVisible;
+      }
+    }
+    function togglePanels(){
+      panelsVisible = !panelsVisible;
+      document.getElementById('leftPanel').style.display = panelsVisible ? 'flex' : 'none';
+      document.getElementById('rightPanel').style.display = panelsVisible ? 'flex' : 'none';
+      document.getElementById('bottomBar').style.display = panelsVisible ? 'flex' : 'none';
+    }
+    function showModule(n){ alert('即将进入【'+n+'】模块（开发中）'); }
+    function goToMinsu(){ alert('即将跳转到民宿详情页面（开发中）'); }
+
+    // ====== 出入记录：逐行丝滑上移 ======
+    let recordTimer = null;
+
+    async function initRecordsSmooth(){
+      try{
+        const res = await fetch('./public/data/records.json');
+        const recordData = await res.json();
+
+        const body = document.getElementById('recordBody');
+        body.innerHTML = '';
+
+        const visibleCount = Math.min(14, recordData.length);
+        for(let i=0;i<visibleCount;i++){
+          body.appendChild(createRecordRow(recordData[i]));
         }
 
-        // 加载建筑矢量
-        async function loadBuildings() {
-            try {
-                buildingDataSource = await Cesium.GeoJsonDataSource.load('./data/buildings.geojson', {
-                    stroke: Cesium.Color.CYAN,
-                    strokeWidth: 2,
-                    fill: Cesium.Color.CYAN.withAlpha(0.2),
-                    clampToGround: true
-                });
-                viewer.dataSources.add(buildingDataSource);
-                console.log('建筑矢量加载成功！');
-            } catch (error) {
-                console.log('建筑矢量加载失败：', error);
-            }
-        }
+        const rowHeight = 28; // 与CSS一致
+        body.style.transition = 'transform 0.55s ease';
 
-        // 点击建筑显示信息面板
-        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-        handler.setInputAction(function (click) {
-            const picked = viewer.scene.pick(click.position);
-            if (Cesium.defined(picked) && picked.id && picked.id.properties) {
-                const props = picked.id.properties;
-                document.getElementById('buildingName').textContent =
-                    props['Name'] ? props['Name'].getValue() : '未命名建筑';
-                document.getElementById('pName').textContent =
-                    props['Name'] ? props['Name'].getValue() : '-';
-                document.getElementById('pUsage').textContent =
-                    props['Usage'] ? props['Usage'].getValue() : '-';
-                document.getElementById('pFloors').textContent =
-                    props['Floors'] ? props['Floors'].getValue() : '-';
-                document.getElementById('pArea').textContent =
-                    props['Area_sqm'] ? props['Area_sqm'].getValue() : '-';
-                document.getElementById('pRemark').textContent =
-                    props['Remark'] ? props['Remark'].getValue() : '-';
-                document.getElementById('infoPanel').style.display = 'block';
-            } else {
-                document.getElementById('infoPanel').style.display = 'none';
-            }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        recordTimer = setInterval(()=>{
+          body.style.transform = `translateY(-${rowHeight}px)`;
 
-        // 关闭信息面板
-        function closeInfoPanel() {
-            document.getElementById('infoPanel').style.display = 'none';
-        }
+          setTimeout(()=>{
+            body.style.transition = 'none';
+            body.style.transform = 'translateY(0)';
 
-        // 复位视角
-        function resetView() {
-            if (modelTileset) {
-                viewer.zoomTo(modelTileset);
-            }
-        }
+            const first = body.querySelector('tr');
+            if(first) body.appendChild(first);
 
-        // 切换建筑轮廓显隐
-        let buildingsVisible = true;
-        function toggleBuildings() {
-            if (buildingDataSource) {
-                buildingsVisible = !buildingsVisible;
-                buildingDataSource.show = buildingsVisible;
-            }
-        }
+            requestAnimationFrame(()=>{
+              body.style.transition = 'transform 0.55s ease';
+            });
+          }, 600);
 
-        loadModel();
-        loadBuildings();
-    </script>
+        }, 1500);
+
+      }catch(e){
+        console.log('出入记录加载失败：', e);
+      }
+    }
+
+    function createRecordRow(item){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${item.plate}</td><td>${item.type}</td><td>${item.time}</td><td>${item.gate}</td>`;
+      return tr;
+    }
+
+    // ====== 鱼池轮播：读取 fishponds.json ======
+    let pondTimer = null;
+
+    async function initFishPondsCarousel(){
+      try{
+        const res = await fetch('./public/data/fishponds.json');
+        const ponds = await res.json();
+        if(!ponds || ponds.length === 0) return;
+
+        let idx = 0;
+        const box = document.getElementById('pFish');
+
+        const render = () => {
+          const p = ponds[idx];
+
+          document.getElementById('pondName').textContent = p.name ?? `鱼池${idx+1}`;
+          document.getElementById('pondTemp').textContent = (p.temp ?? '-');
+          document.getElementById('pondDo').textContent = (p.do ?? '-');
+
+          // 鱼数量显示优化：>=10000 显示“万尾”
+          const fish = p.fish ?? '-';
+          if (typeof fish === 'number') {
+            document.getElementById('pondFish').textContent = fish >= 10000 ? (fish/10000).toFixed(1) + '万' : fish;
+          } else {
+            document.getElementById('pondFish').textContent = fish;
+          }
+
+          document.getElementById('pondAnglers').textContent = (p.anglers ?? '-');
+
+          // 轻微高亮一下表示切换
+          box.style.filter = 'brightness(1.10)';
+          setTimeout(()=> box.style.filter = 'brightness(1)', 160);
+
+          idx = (idx + 1) % ponds.length;
+        };
+
+        render();
+        clearInterval(pondTimer);
+        pondTimer = setInterval(render, 3000);
+
+      }catch(e){
+        console.log('鱼池数据加载失败：', e);
+      }
+    }
+
+    // ====== 停车进度条 ======
+    function initParkingBar(){
+      const used = 87, total = 150;
+      const pct = Math.min(100, Math.round(used/total*100));
+      document.getElementById('parkFill').style.width = pct + '%';
+    }
+
+    loadModel();
+    loadBuildings();
+    initRecordsSmooth();
+    initFishPondsCarousel();
+    initParkingBar();
+  </script>
 </body>
 </html>
