@@ -1,0 +1,23 @@
+[
+  { "plate": "粤P·A83K6", "type": "临时车", "time": "08:05", "gate": "南入口" },
+  { "plate": "粤P·D12F8", "type": "月租车", "time": "08:12", "gate": "北入口" },
+  { "plate": "粤B·W23X5", "type": "临时车", "time": "08:19", "gate": "南入口" },
+  { "plate": "粤S·K78M2", "type": "临时车", "time": "08:27", "gate": "东入口" },
+  { "plate": "粤P·B56N9", "type": "临时车", "time": "08:35", "gate": "南出口" },
+  { "plate": "粤P·C90R3", "type": "月租车", "time": "08:44", "gate": "北出口" },
+  { "plate": "粤A·H19Q7", "type": "临时车", "time": "08:51", "gate": "南入口" },
+  { "plate": "粤P·M67T2", "type": "临时车", "time": "09:03", "gate": "西入口" },
+  { "plate": "粤U·J08L6", "type": "赛事车辆", "time": "09:10", "gate": "南入口" },
+  { "plate": "粤P·E77S1", "type": "临时车", "time": "09:18", "gate": "东入口" },
+
+  { "plate": "粤P·R21N8", "type": "月租车", "time": "09:26", "gate": "北入口" },
+  { "plate": "粤B·F62X0", "type": "临时车", "time": "09:33", "gate": "南入口" },
+  { "plate": "粤P·G05C3", "type": "临时车", "time": "09:41", "gate": "西出口" },
+  { "plate": "粤S·P88D9", "type": "赛事车辆", "time": "09:50", "gate": "南入口" },
+  { "plate": "粤P·Y13K4", "type": "临时车", "time": "10:02", "gate": "北入口" },
+  { "plate": "粤A·Q26M5", "type": "临时车", "time": "10:11", "gate": "东入口" },
+  { "plate": "粤P·L39V2", "type": "月租车", "time": "10:20", "gate": "北出口" },
+  { "plate": "粤B·Z74R1", "type": "临时车", "time": "10:28", "gate": "南出口" },
+  { "plate": "粤P·T52A6", "type": "临时车", "time": "10:36", "gate": "西入口" },
+  { "plate": "粤U·N66H8", "type": "赛事车辆", "time": "10:45", "gate": "南入口" }
+]

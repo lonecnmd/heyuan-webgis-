@@ -1,0 +1,6 @@
+[
+  { "name": "1号鱼池", "temp": 23.5, "do": 7.8, "fish": 12000, "anglers": 36 },
+  { "name": "2号鱼池", "temp": 24.1, "do": 7.5, "fish": 9000,  "anglers": 22 },
+  { "name": "3号鱼池", "temp": 22.8, "do": 8.0, "fish": 15000, "anglers": 41 },
+  { "name": "4号鱼池", "temp": 23.2, "do": 7.6, "fish": 11000, "anglers": 30 }
+]
