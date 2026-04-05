@@ -11,588 +11,532 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:100%; height:100%; overflow:hidden; font-family:"Microsoft YaHei", sans-serif; background:#040e1e; }
-
-    /* ========= Cesium ========= */
     #cesiumContainer{ width:100%; height:100%; }
 
-    /* ========= 顶部标题栏（保持之前风格）========= */
+    /* ===== 顶部/底部装饰图 ===== */
+    #headerDeco{
+      position:absolute; top:0; left:0; width:100%; height:80px;
+      object-fit:fill; z-index:140; pointer-events:none; opacity:0.95;
+    }
+
+
+    /* ===== 顶部标题栏 ===== */
     #header{
-      position:absolute; top:0; left:0;
-      width:100%; height:80px;
-      background: linear-gradient(180deg, rgba(4,14,30,0.98) 0%, rgba(4,14,30,0.6) 80%, transparent 100%);
-      z-index:200;
-      padding:12px 30px 0;
+      position:absolute; top:0; left:0; width:100%; height:80px;
+      z-index:200; padding:12px 30px 0;
       pointer-events:none;
+      background: linear-gradient(180deg, rgba(4,14,30,0.98) 0%, rgba(4,14,30,0.6) 80%, transparent 100%);
     }
     #header::after{
-      content:'';
-      position:absolute; bottom:10px; left:50%;
-      transform:translateX(-50%);
+      content:''; position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
       width:70%; height:1px;
       background: linear-gradient(90deg, transparent, rgba(0,212,255,0.35), rgba(0,180,255,0.75), rgba(0,212,255,0.35), transparent);
     }
-    #header .left-info, #header .center-title, #header .right-info{
-      pointer-events:auto;
-      position:absolute; top:12px;
-    }
-    #header .left-info{
-      left:30px;
-      color: rgba(160,200,230,0.9);
-      font-size: 13px;
-      display:flex; align-items:center; gap:12px;
-    }
-    #header .left-info .loc{ color: rgba(0,212,255,0.9); }
-    #header .left-info .weather{
-      color:#f0c040;
-      background: linear-gradient(135deg, rgba(240,192,64,0.1), rgba(240,192,64,0.05));
-      padding:2px 10px; border-radius:10px;
-    }
 
-    #header .center-title{
-      left:50%; transform: translateX(-50%);
-      text-align:center;
-    }
+    #header .left-info, #header .center-title, #header .right-info{ pointer-events:auto; position:absolute; top:12px; }
+    #header .left-info{
+  left:30px;
+  color: rgba(160,200,230,0.9);
+  font-size: 13px;
+  display:flex;
+  flex-direction: column;    /* ← 新增：改为纵向 */
+  align-items: flex-start;   /* ← 改：原来是 center，改为左对齐 */
+  gap: 6px;                  /* ← 改：原来是 12px，纵向间距改小 */
+}
+
+/* 新增：第一行（位置图标 + 天气）横向 */
+.left-top-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* 新增：第二行（三个按钮）横向 */
+.left-btn-row{
+  display:flex;
+  gap:8px;
+}
+
+    #header .left-info .loc{ color: rgba(0,212,255,0.9); display:flex; align-items:center; gap:6px; }
+    .loc-icon{ width:16px; height:16px; object-fit:contain; filter: drop-shadow(0 0 6px rgba(0,180,255,0.35)); }
+
+    #header .left-info .weather{ color:#f0c040; background: linear-gradient(135deg, rgba(240,192,64,0.1), rgba(240,192,64,0.05)); padding:2px 10px; border-radius:10px; }
+
+    #header .center-title{ left:50%; transform: translateX(-50%); text-align:center; }
     #header .center-title h1{
       font-size:30px; letter-spacing:10px;
       background: linear-gradient(180deg, #a0e8ff 0%, #00b4ff 50%, #0068c8 100%);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       filter: drop-shadow(0 0 20px rgba(0,180,255,0.3));
     }
-    #header .center-title .subtitle{
-      color: rgba(100,180,220,0.7);
-      font-size: 13px; letter-spacing: 5px; margin-top: 2px;
-    }
+    #header .center-title .subtitle{ color: rgba(100,180,220,0.7); font-size: 13px; letter-spacing: 5px; margin-top: 2px; }
 
-    #header .right-info{
-      right:30px; text-align:right;
-    }
+    #header .right-info{ right:30px; text-align:right; }
     #header .right-info .date{ font-size:13px; color: rgba(140,180,210,0.7); }
     #header .right-info .time{
-      font-family:'Orbitron', monospace;
-      font-size:24px;
+      font-family:'Orbitron', monospace; font-size:24px;
       background: linear-gradient(180deg, #80dfff, #0090e0);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
     }
 
-    /* ========= 顶部按钮 ========= */
-    #topBar{
-      position:absolute; top:80px; left:25px;
-      display:flex; gap:8px; z-index:200;
-    }
+    /* ===== 顶部按钮 ===== */
+
     .top-btn{
       padding:5px 16px;
       background: linear-gradient(135deg, rgba(0,120,200,0.25), rgba(0,60,120,0.15));
       backdrop-filter: blur(8px);
-      border:none;
-      border-radius:15px;
+      border:none; border-radius:15px;
       color: rgba(0,200,255,0.85);
-      font-size:12px;
-      cursor:pointer;
-      transition: all .3s;
+      font-size:12px; cursor:pointer; transition: all .3s;
     }
     .top-btn:hover{
       background: linear-gradient(135deg, rgba(0,150,255,0.4), rgba(0,80,160,0.3));
-        color:#fff;
-      box-shadow: 0 0 15px rgba(0,150,255,0.3);
+      color:#fff; box-shadow: 0 0 15px rgba(0,150,255,0.3);
     }
 
-    /* ========= 左右面板总体布局（保证显示全） ========= */
+    /* ===== 左右栏布局：改为自适应分配，避免显示不全 ===== */
     :root{
       --panel-w: 310px;
       --gap: 10px;
       --panel-top: 108px;
-      --panel-bottom: 88px; /* 底部模块 */
-      --service-h: 200px;   /* 你指定：周边服务 */
-      --fish-h: 250px;      /* 鱼池面板高度（可再调） */
-      --park-h: 170px;      /* 停车面板 */
-      --record-h: 300px;    /* 你指定：出入记录 */
-      --today-h: 170px;     /* 今日数据 */
+      --panel-bottom: 65px; /* 底部装饰图+底部bar占一点空间 */
     }
-
     #leftPanel, #rightPanel{
       position:absolute;
       top: var(--panel-top);
       bottom: var(--panel-bottom);
       width: var(--panel-w);
-      z-index:120;
+      z-index:180;
       display:flex;
       flex-direction:column;
       gap: var(--gap);
-      overflow:hidden;
+      /* 不要 hidden，否则小屏必裁切 */
+      overflow: visible;
     }
     #leftPanel{ left: 15px; }
     #rightPanel{ right: 15px; }
 
-    /* ========= 面板通用：左右背景图 + 底部透明渐隐 ========= */
+    /* ===== 统一模块外观（每个 panel 都一样） ===== */
     .panel{
       position:relative;
       border-radius: 12px;
       padding: 14px 16px;
-      overflow:hidden;
       color: rgba(230,245,255,0.92);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      flex: 0 0 auto;
-      min-height: 0;
-    }
-    .panel.left::before,
-    .panel.right::before{
-      content:'';
-      position:absolute; inset:0;
-      background-position: center;
-      background-repeat:no-repeat;
-      background-size: 100% 100%;  /* 关键：让素材铺满，避免“尺寸不对” */
-      opacity: 0.92;
-      z-index:0;
-    }
-    .panel.left::before{ background-image: url('./public/images/title_left_bg.png'); }
-    .panel.right::before{ background-image: url('./public/images/title_right_bg.png'); }
 
-    /* 下方透明（底下更透明） */
-    .panel::after{
-      content:'';
-      position:absolute; inset:0;
-      background: linear-gradient(180deg,
-        rgba(4,14,30,0.06) 0%,
-        rgba(4,14,30,0.10) 52%,
-        rgba(4,14,30,0.55) 85%,
-        rgba(4,14,30,0.88) 100%);
-      z-index:0;
+      /* 边框改为深蓝发光色 */
+      border: 1px solid rgba(0, 150, 255, 0.45);
+
+      /* 外阴影 + 内发光（三层叠加） */
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.25),
+        inset 0 0 30px rgba(0, 80, 200, 0.20),
+        inset 0 0 8px  rgba(0, 150, 255, 0.15);
+
+      background:
+        /* 左右边缘深蓝向内渐变 */
+        linear-gradient(to right,
+          rgba(0,60,160, 0.30) 0%,
+          transparent 35%,
+          transparent 65%,
+          rgba(0,60,160, 0.30) 100%
+        ),
+        /* 上下边缘深蓝向内渐变 */
+        linear-gradient(to bottom,
+          rgba(0,60,160, 0.25) 0%,
+          transparent 30%,
+          transparent 70%,
+          rgba(0,60,160, 0.25) 100%
+        ),
+        /* 整体底色 */
+        linear-gradient(180deg,
+          rgba(4,14,30, 0.15) 0%,
+          rgba(4,14,30, 0.55) 100%
+        ),
+        url('./public/images/title_left_bg.png') no-repeat left top / auto 10px,
+        url('./public/images/title_right_bg.png') no-repeat right bottom / auto 20px;
+      overflow:hidden;
     }
-    .panel > *{ position:relative; z-index:1; }
+
 
     .panel-title{
       display:flex; align-items:center; gap:10px;
       font-size:14px; font-weight:800;
-      margin-bottom: 10px;
-      letter-spacing:1px;
+      margin-bottom: 10px; letter-spacing:1px;
       background: linear-gradient(90deg, #7be7ff, #00a8ff, #2b7bff);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       filter: drop-shadow(0 0 10px rgba(0,180,255,0.12));
       user-select:none;
     }
-    .panel-title .dot{
-      width:8px; height:8px; border-radius:50%;
-      background:#00d7ff;
-      box-shadow: 0 0 8px rgba(0,215,255,0.75);
-      flex-shrink:0;
-    }
-    .title-right{
-      margin-left:auto;
-      font-size:12px;
-      font-weight:700;
-      color: rgba(220,240,255,0.75);
-      -webkit-text-fill-color: initial; /* 避免被渐变文字影响 */
-      background: none;
-    }
+    .panel-title .dot{ width:8px; height:8px; border-radius:50%; background:#00d7ff; box-shadow: 0 0 8px rgba(0,215,255,0.75); flex-shrink:0; }
+    .title-right{ margin-left:auto; font-size:12px; font-weight:700; color: rgba(220,240,255,0.75); -webkit-text-fill-color: initial; background:none; }
 
-    /* ========= 各面板高度分配 ========= */
-    #pService { height: var(--service-h); }
-    #pFish    { height: var(--fish-h); }
-    #pVillage { height: calc(100% - var(--service-h) - var(--fish-h) - (2 * var(--gap))); }
+    /* ===== 左侧三块：周边服务(固定) + 鱼池(自适应占剩余)+趋势(自适应) ===== */
+    #pService { flex: 0 0 auto; height: clamp(200px, 22vh, 240px); margin-top: -30px;}
+    #pFish    { flex: 0 0 auto; height: clamp(200px, 26vh, 280px); }
+    #pTrend   { flex: 1 1 auto; min-height: 210px; margin-top: 0px;}
 
-    #pPark    { height: var(--park-h); }
-    #pRecord  { height: var(--record-h); }
-    #pToday   { height: var(--today-h); }
-    #pTrend   { height: calc(100% - var(--park-h) - var(--record-h) - var(--today-h) - (3 * var(--gap))); }
+    /* ===== 右侧四块：停车(固定) + 出入记录(自适应) + 今日数据(固定) +  ===== */
+    #pPark   { flex: 0 0 auto; height: clamp(230px, 24vh, 230px); margin-top: -30px;}
+    #pRecord { flex: 1 1 auto; min-height: 200px; }
+    #pToday  { flex: 0 0 auto; height: clamp(180px, 18vh, 190px);margin-top: 0px; }
 
-    /* ========= 周边服务：缩小图标/文字 ========= */
-    .service-grid{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 7px;
+    /* 面板内容超出时：只让内部滚动（大屏一般不会滚；小屏救急） */
+    .panel-body{
+      height: calc(100% - 26px);
+      overflow:auto;
+      padding-right: 4px;
     }
+    .panel-body::-webkit-scrollbar{ width:6px; }
+    .panel-body::-webkit-scrollbar-thumb{ background: rgba(0,210,255,0.25); border-radius: 999px; }
+
+    /* ===== 周边服务：整体缩小一点 ===== */
+    .service-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
     .service-item{
-      border-radius:10px;
-      padding: 8px 6px 9px;
+      border-radius:10px; padding: 7px 6px 8px;
       background: rgba(0,0,0,0.10);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       text-align:center;
     }
-    .service-item .icon-img{
-      width:24px; height:24px; object-fit:contain;
-      filter: drop-shadow(0 0 6px rgba(0,180,255,0.22));
-    }
+    .service-item .icon-img{ width:22px; height:22px; object-fit:contain; filter: drop-shadow(0 0 6px rgba(0,180,255,0.22)); }
     .service-item .num{
-      margin-top:5px;
-      font-size:18px; font-weight:900;
-      font-family:'Orbitron', monospace;
+      margin-top:4px;
+      font-size:18px; font-weight:900; font-family:'Orbitron', monospace;
       background: linear-gradient(180deg, #8df2ff, #00b0ff);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       line-height: 1.0;
     }
-    .service-item .label{
-      margin-top:2px;
-      font-size:10px;
-      color: rgba(190,225,250,0.70);
-      letter-spacing:1px;
+    .service-item .label{ margin-top:2px; font-size:10px; color: rgba(190,225,250,0.70); letter-spacing:1px; }
+
+    /* 小高度屏幕再压缩一下周边服务 */
+    @media (max-height: 820px){
+      .service-item{ padding: 6px 5px 7px; }
+      .service-item .icon-img{ width:18px; height:18px; }
+      .service-item .num{ font-size:16px; }
+      .service-item .label{ font-size:9px; }
     }
 
-    /* ========= 鱼池：动态轮播（四个指标） ========= */
-    .fish-grid{
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
+    /* ===== 鱼池 ===== */
+    .fish-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .fish-item{
-      border-radius:10px;
-      padding: 9px 8px;
+      border-radius:10px; padding: 9px 8px;
       background: rgba(0,0,0,0.10);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       text-align:center;
     }
     .fish-item .label{ font-size:10px; color: rgba(190,235,220,0.72); }
     .fish-item .value{
-      margin-top:3px;
-      font-size:18px;
-      font-weight:900;
-      font-family:'Orbitron', monospace;
+      margin-top:3px; font-size:18px; font-weight:900; font-family:'Orbitron', monospace;
       background: linear-gradient(180deg, #8fffe0, #00d08a);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       line-height: 1.0;
     }
     .fish-item .unit{ font-size:10px; color: rgba(160,230,210,0.60); margin-left:3px; }
-    .chart-box{ width:100%; height: 105px; margin-top:8px; } /* 控制高度避免溢出 */
+    .chart-box{ width:100%; height: 120px; margin-top:8px; }
 
-    /* ========= 村庄概况 ========= */
-    .village-stats{
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px 10px;
-      font-size: 12px;
-    }
-    .village-stats .item{
-      color: rgba(190,225,250,0.72);
-      display:flex; align-items:center; gap:6px;
-      font-size: 11px;
-    }
-    .village-stats .item b{
-      color: rgba(0,220,255,0.92);
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
-    }
+    /* ===== 村庄概况 ===== */
+    .village-stats{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 6px 10px; }
+    .village-stats .item{ color: rgba(190,225,250,0.72); display:flex; align-items:center; gap:6px; font-size: 11px; }
+    .village-stats .item b{ color: rgba(0,220,255,0.92); font-family: 'Orbitron', monospace; font-weight: 900; }
     .village-desc{
-      margin-top: 8px;
-      padding-top: 8px;
+      margin-top: 8px; padding-top: 8px;
       border-top: 1px solid rgba(255,255,255,0.10);
-      font-size: 10px;
-      line-height: 1.6;
-      color: rgba(200,230,250,0.55);
+      font-size: 10px; line-height: 1.6; color: rgba(200,230,250,0.55);
     }
-    #chartLandUse{ height: 115px; margin-top: 8px; }
+    #chartLandUse{ height: 130px; margin-top: 8px; }
 
-    /* ========= 停车信息 ========= */
-    .parking-row{
-      display:flex; justify-content:space-between; align-items:center;
-      padding: 6px 2px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 12px;
-    }
+    /* ===== 停车 ===== */
+    .parking-row{ display:flex; justify-content:space-between; align-items:center; padding: 6px 2px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
     .parking-row:last-child{ border-bottom:none; }
     .parking-row .label{ color: rgba(200,230,250,0.70); }
     .parking-row .value{
-      font-size: 18px; font-weight: 900;
-      font-family:'Orbitron', monospace;
+      font-size: 18px; font-weight: 900; font-family:'Orbitron', monospace;
       background: linear-gradient(180deg, #8df2ff, #00b0ff);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       line-height: 1.0;
     }
-    .park-bar-bg{
-      width:100%; height: 8px; border-radius: 999px;
-      background: rgba(255,255,255,0.10);
-      margin-top: 8px; overflow:hidden;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-    }
-    .park-bar-fill{
-      height:100%;
-      width:58%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #0068ff, #00c8ff, #00f0c8);
-      box-shadow: 0 0 18px rgba(0,200,255,0.25);
-      transition: width 1s ease;
-    }
+    .park-bar-bg{ width:100%; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.10); margin-top: 8px; overflow:hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+    .park-bar-fill{ height:100%; width:58%; border-radius: 999px; background: linear-gradient(90deg, #0068ff, #00c8ff, #00f0c8); box-shadow: 0 0 18px rgba(0,200,255,0.25); transition: width 1s ease; }
 
-    /* ========= 出入记录 ========= */
-    .record-wrap{
-      height: calc(100% - 26px);
-      overflow:hidden;
-    }
+    /* ===== 出入记录 ===== */
     .record-table{ width:100%; border-collapse:collapse; font-size: 10px; }
     .record-table thead th{
       color: rgba(0,210,255,0.75);
-      text-align:left;
-      padding: 6px 4px 7px;
-      font-weight: 800;
-      border-bottom: 1px solid rgba(255,255,255,0.14);
+      text-align:left; padding: 6px 4px 7px;
+      font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.14);
     }
     .record-table tbody td{
       color: rgba(220,240,255,0.75);
       padding: 6px 4px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .record-table tbody tr{ height: 28px; }
-    #recordBody{
-      display:block;
-      will-change: transform;
-      transform: translateY(0);
-      transition: transform 0.55s ease;
-    }
-    .record-table thead, .record-table tbody tr{
-      display: table;
-      width: 100%;
-      table-layout: fixed;
-    }
+    #recordBody{ display:block; will-change: transform; transform: translateY(0); transition: transform 0.55s ease; }
+    .record-table thead, .record-table tbody tr{ display: table; width: 100%; table-layout: fixed; }
     .record-table tbody{ display:block; }
 
-    /* ========= 今日数据 ========= */
-    .stat-grid{
-      display:grid;
-      grid-template-columns: repeat(2,1fr);
-      gap: 8px;
-    }
+    /* ===== 今日数据 ===== */
+    .stat-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
     .stat-card{
-      border-radius:10px;
-      padding: 9px 8px 10px;
+      border-radius:10px; padding: 9px 8px 10px;
       background: rgba(0,0,0,0.10);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       text-align:center;
     }
     .stat-card .label{ font-size:10px; color: rgba(200,230,250,0.70); }
-    .stat-card .value{
-      margin-top:4px;
-      font-size:18px;
-      font-weight:900;
-      font-family:'Orbitron', monospace;
-      line-height: 1.0;
-    }
-    .v-blue  { background: linear-gradient(180deg, #8df2ff, #00b0ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .v-green { background: linear-gradient(180deg, #8fffe0, #00d08a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-card .value{ margin-top:4px; font-size:18px; font-weight:900; font-family:'Orbitron', monospace; line-height: 1.0; }
+    .v-blue { background: linear-gradient(180deg, #8df2ff, #00b0ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .v-green{ background: linear-gradient(180deg, #8fffe0, #00d08a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .v-orange{ background: linear-gradient(180deg, #ffe9a0, #ffb000); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .v-red   { background: linear-gradient(180deg, #ffb3b3, #ff5b6b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .v-red  { background: linear-gradient(180deg, #ffb3b3, #ff5b6b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 
-    /* ========= 趋势图 ========= */
-    #chartVisitor{ height: calc(100% - 26px); }
+    /* ===== 趋势图 ===== */
+    #chartVisitor{ height: 100%; }
 
-    /* ========= 底部模块 ========= */
+    /* ===== 底部栏 ===== */
+    /* 底部栏：不要黑色矩形框 */
     #bottomBar{
       position:absolute;
-      bottom:15px; left:50%;
+      bottom: 8px;
+      left: 50%;
       transform: translateX(-50%);
-      z-index:200;
-      display:flex; gap:4px;
-      background: linear-gradient(160deg, rgba(8,25,50,0.78), rgba(4,14,30,0.72));
-      backdrop-filter: blur(12px);
-      border-radius: 14px;
-      padding: 8px 12px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.25);
-    }
-    .module-btn{
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      width:72px; height:58px;
-      background: transparent;
-      border:none;
-      border-radius: 10px;
-      cursor:pointer;
-      transition: all .3s;
-      color: rgba(140,190,220,0.6);
-    }
-    .module-btn:hover{
-      background: rgba(0,200,255,0.10);
-      transform: translateY(-4px);
-    }
-    .module-btn .icon{ font-size:22px; transition: all .3s; }
-    .module-btn:hover .icon{ transform: scale(1.15); filter: drop-shadow(0 0 6px rgba(0,180,255,0.5)); }
-    .module-btn .text{ font-size: 10px; margin-top:4px; transition: all .3s; }
-    .module-btn:hover .text{ color: rgba(0,210,255,0.9); }
+      z-index: 220;
 
-    /* ========= 建筑信息弹窗 ========= */
-    #infoPanel{
-      position:absolute;
-      top:50%; left:50%;
+      display:flex;
+      gap: 10px;
+
+      background: transparent;     /* 关键：去掉矩形背景 */
+      box-shadow: none;            /* 关键：去掉阴影 */
+      padding: 0;                  /* 关键：去掉内边距 */
+      backdrop-filter: none;
+    }
+
+    /* 按钮：本身透明，不要卡片框 */
+    .module-btn{
+      width: 60px;  /* 按钮整体占位 */
+      height: 60px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+
+      display:flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+
+      color: rgba(180,230,255,0.70);
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .module-btn:hover{
+      transform: translateY(-6px);
+    }
+
+    /* 图标容器：用于叠放 di2.png 和 图标png */
+    .module-btn .icon-wrap{
+      position: relative;
+      width: 56px;
+      height: 56px;
+      margin-bottom: 6px;
+    }
+
+    /* 发光底（di2.png） */
+    /* di2.png 圆圈：居中，略大于图标 */
+    .module-btn .icon-base{
+      position: absolute;
+      left: 50%;
+      top: 50%;
       transform: translate(-50%, -50%);
+
+      width: 56px;    /* 圆圈大小=容器大小（你也可以调大一点） */
+      height: 56px;
+      object-fit: contain;
+
+      z-index: 0;
+      opacity: 0.95;
+      filter: drop-shadow(0 0 12px rgba(0, 220, 255, 0.55))
+              drop-shadow(0 0 26px rgba(0, 120, 255, 0.35));
+    }
+
+    /* 上面的图标 */
+/* 图标：居中，略小于圆圈 */
+    .module-btn .icon-img{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+
+      z-index: 1;
+      filter: drop-shadow(0 0 10px rgba(0, 180, 255, 0.22));
+    }
+
+    /* ===== 建筑信息弹窗 ===== */
+    #infoPanel{
+      position:absolute; top:50%; left:50%; transform: translate(-50%, -50%);
       width: 320px;
       background: linear-gradient(160deg, rgba(8,30,60,0.92), rgba(4,14,30,0.90));
       backdrop-filter: blur(15px);
-      border-radius: 14px;
-      padding: 20px;
-      color: #fff;
-      z-index: 250;
-      display: none;
+      border-radius: 14px; padding: 20px; color: #fff;
+      z-index: 260; display: none;
       box-shadow: 0 20px 50px rgba(0,0,0,0.35);
     }
     #infoPanel h3{
       font-size:16px; margin-bottom:14px; padding-bottom:10px;
       background: linear-gradient(90deg, #7be7ff, #00a8ff, #2b7bff);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     }
     #infoPanel table{ width:100%; font-size:13px; }
     #infoPanel table td{ padding:7px 0; border-bottom: 1px solid rgba(255,255,255,0.10); }
-    #infoPanel table td:first-child{ color: rgba(0,190,255,0.7); width:55px; font-size:12px; }
+    #infoPanel table td:first-child{ color: rgba(0,190,255,0.7); width:70px; font-size:12px; }
     #closePanel{
       position:absolute; top:12px; right:14px;
-      color: rgba(0,190,255,0.6);
-      cursor:pointer;
-      font-size:18px;
-      background:none; border:none;
-      transition: all .3s;
+      color: rgba(0,190,255,0.6); cursor:pointer; font-size:18px;
+      background:none; border:none; transition: all .3s;
     }
     #closePanel:hover{ color:#fff; transform: rotate(90deg); }
     .btn-minsu{
-      margin-top:14px; width:100%;
-      padding:8px;
+      margin-top:14px; width:100%; padding:8px;
       background: rgba(0,200,255,0.14);
-      border:none;
-      border-radius: 10px;
+      border:none; border-radius: 10px;
       color: rgba(0,235,255,0.95);
-      font-size: 12px;
-      cursor:pointer;
+      font-size: 12px; cursor:pointer;
     }
 
-    /* ========= 隐藏 Cesium 默认控件 ========= */
+    /* ===== 隐藏 Cesium 默认控件 ===== */
     .cesium-viewer-toolbar,
     .cesium-viewer-animationContainer,
     .cesium-viewer-timelineContainer,
     .cesium-viewer-bottom,
     .cesium-viewer-fullscreenContainer,
-    .cesium-viewer-infoBoxContainer{
-      display:none !important;
-    }
-
-        /* 你现有的最后一段CSS... */
-    .cesium-viewer-infoBoxContainer{
-      display:none !important;
-    }
-
-    /* ===== 在这里粘贴新的角落贴图CSS ===== */
-    .panel.left::before{
-      content:'';
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: 20%;
-      height: 10%;
-      background: url('./public/images/title_left_bg.png') no-repeat left top;
-      background-size: contain;
-      opacity: 0.95;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .panel.right::before{
-      content:'';
-      position:absolute;
-      right: 0;
-      bottom: 0;
-      width: 10%;
-      height: 10%;
-      background: url('./public/images/title_right_bg.png') no-repeat right bottom;
-      background-size: contain;
-      opacity: 0.95;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-
-
+    .cesium-viewer-infoBoxContainer{ display:none !important; }
   </style>
 </head>
 
 <body>
+  <!-- 顶部/底部装饰 -->
+  <img id="headerDeco" src="./public/images/header.png" alt="">
+
   <div id="header">
     <div class="left-info">
-      <span class="loc">📍 东源县</span>
-      <span class="weather" id="weatherInfo">☀ 28°C 晴</span>
+      <div class="left-top-row">
+        <span class="loc">
+          <img class="loc-icon" src="./public/images/dingwei.png" alt="">
+          东源县
+        </span>
+        <span class="weather" id="weatherInfo">☀ 28°C 晴</span>
+      </div>
+      <div class="left-btn-row">
+        <button class="top-btn" onclick="togglePanels()">隐藏面板</button>
+        <button class="top-btn" onclick="resetView()">复位视角</button>
+        <button class="top-btn" onclick="toggleBuildings()">建筑标注</button>
+      </div>
     </div>
+
     <div class="center-title">
-      <h1>枕水渔"十" · 万绿归宿</h1>
-      <div class="subtitle">洋潭村数字乡村三维实景展示平台</div>
+      <h1>洋潭村数字乡村三维实景展示平台</h1>
     </div>
+
     <div class="right-info">
       <div class="date" id="dateInfo"></div>
       <div class="time" id="timeInfo"></div>
     </div>
   </div>
 
-  <div id="topBar">
-    <button class="top-btn" onclick="togglePanels()">🔲 隐藏面板</button>
-    <button class="top-btn" onclick="resetView()">🏠 复位视角</button>
-    <button class="top-btn" onclick="toggleBuildings()">📌 建筑标注</button>
-  </div>
-
-  <!-- 左侧 -->
+  <!-- 左侧（顺序已调整：村庄概况 → 周边服务 → 鱼池） -->
   <div id="leftPanel">
-    <div class="panel left" id="pService">
+
+    <!-- 周边服务 -->
+    <div class="panel" id="pService">
       <div class="panel-title"><span class="dot"></span>周边服务</div>
-      <div class="service-grid">
-        <div class="service-item"><img class="icon-img" src="./public/images/canyin.png" alt="餐饮"><div class="num">4</div><div class="label">餐饮</div></div>
-        <div class="service-item"><img class="icon-img" src="./public/images/jiaoyu.png" alt="教育"><div class="num">3</div><div class="label">教育</div></div>
-        <div class="service-item"><img class="icon-img" src="./public/images/yiliao.png" alt="医疗"><div class="num">2</div><div class="label">医疗</div></div>
-        <div class="service-item"><img class="icon-img" src="./public/images/gongan.png" alt="公安"><div class="num">1</div><div class="label">公安</div></div>
-        <div class="service-item"><img class="icon-img" src="./public/images/qiye.png" alt="企业"><div class="num">6</div><div class="label">企业</div></div>
-        <div class="service-item"><img class="icon-img" src="./public/images/yule.png" alt="娱乐"><div class="num">2</div><div class="label">娱乐</div></div>
+      <div class="panel-body">
+        <div class="service-grid">
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/canyin.png" alt="餐饮">
+            <div class="num">4</div><div class="label">餐饮</div>
+          </div>
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/jiaoyu.png" alt="教育">
+            <div class="num">1</div><div class="label">教育</div>
+          </div>
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/yiliao.png" alt="医疗">
+            <div class="num">2</div><div class="label">医疗</div>
+          </div>
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/gongan.png" alt="公安">
+            <div class="num">1</div><div class="label">公安</div>
+          </div>
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/qiye.png" alt="企业">
+            <div class="num">3</div><div class="label">企业</div>
+          </div>
+          <div class="service-item">
+            <img class="icon-img" src="./public/images/yule.png" alt="娱乐">
+            <div class="num">2</div><div class="label">娱乐</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="panel left" id="pFish">
+    <!-- 鱼池实时监测 -->
+    <div class="panel" id="pFish">
       <div class="panel-title">
         <span class="dot"></span>鱼池实时监测
         <span class="title-right" id="pondName">-</span>
       </div>
-      <div class="fish-grid">
-        <div class="fish-item"><div class="label">水温</div><div class="value"><span id="pondTemp">-</span><span class="unit">°C</span></div></div>
-        <div class="fish-item"><div class="label">水质(DO)</div><div class="value"><span id="pondDo">-</span><span class="unit">mg/L</span></div></div>
-        <div class="fish-item"><div class="label">鱼类存量</div><div class="value"><span id="pondFish">-</span><span class="unit">尾</span></div></div>
-        <div class="fish-item"><div class="label">今日垂钓</div><div class="value"><span id="pondAnglers">-</span><span class="unit">人</span></div></div>
+      <div class="panel-body">
+        <div class="fish-grid">
+          <div class="fish-item"><div class="label">水温</div><div class="value"><span id="pondTemp">-</span><span class="unit">°C</span></div></div>
+          <div class="fish-item"><div class="label">水质(DO)</div><div class="value"><span id="pondDo">-</span><span class="unit">mg/L</span></div></div>
+          <div class="fish-item"><div class="label">鱼类存量</div><div class="value"><span id="pondFish">-</span><span class="unit">尾</span></div></div>
+          <div class="fish-item"><div class="label">今日垂钓</div><div class="value"><span id="pondAnglers">-</span><span class="unit">人</span></div></div>
+        </div>
+        <div id="chartWaterTemp" class="chart-box"></div>
       </div>
-      <div id="chartWaterTemp" class="chart-box"></div>
     </div>
 
-    <div class="panel left" id="pVillage">
-      <div class="panel-title"><span class="dot"></span>村庄概况</div>
-      <div class="village-stats">
-        <div class="item">📐 总面积：<b>8</b> km²</div>
-        <div class="item">👥 人口：<b>1200</b> 人</div>
-        <div class="item">🏠 户数：<b>320</b> 户</div>
-        <div class="item">🌾 耕地：<b>680</b> 亩</div>
-        <div class="item">💧 水域：<b>1200</b> 亩</div>
-        <div class="item">🎣 钓位：<b>120</b> 个</div>
+    <!-- 月度游客趋势（从右侧移过来） -->
+    <div class="panel" id="pTrend">
+      <div class="panel-title"><span class="dot"></span>月度游客趋势</div>
+      <div class="panel-body">
+        <div id="chartVisitor" style="width:100%;height:100%;min-height:150px;"></div>
       </div>
-      <div class="village-desc">
-        洋潭村位于东源县涧头镇东南部、万绿湖上游，拥有600年历史的古村落，为省级“百千万工程”典型培育村。依托万绿湖5A级生态资源与河源首家省级标准垂钓竞赛基地，打造垂钓小镇·渔村民宿集群·农文旅融合示范区。
-      </div>
-      <div id="chartLandUse" class="chart-box"></div>
     </div>
+
   </div>
+
 
   <!-- 右侧 -->
   <div id="rightPanel">
-    <div class="panel right" id="pPark">
+
+    <!-- 停车信息 -->
+    <div class="panel" id="pPark">
       <div class="panel-title"><span class="dot"></span>停车信息</div>
-      <div class="parking-row"><span class="label">🚗 总车位</span><span class="value v-blue">150</span></div>
-      <div class="parking-row"><span class="label">🔴 已用车位</span><span class="value v-orange">87</span></div>
-      <div class="parking-row"><span class="label">🟢 空闲车位</span><span class="value v-green">63</span></div>
-      <div class="parking-row"><span class="label">🛩 停机位</span><span class="value v-blue">6</span></div>
-      <div class="parking-row"><span class="label">🛵 摩托车位</span><span class="value v-blue">40</span></div>
-      <div class="park-bar-bg"><div class="park-bar-fill" id="parkFill"></div></div>
+      <div class="panel-body">
+        <div class="parking-row"><span class="label">总车位</span><span class="value v-blue">150</span></div>
+        <div class="parking-row"><span class="label">已用车位</span><span class="value v-orange">87</span></div>
+        <div class="parking-row"><span class="label">空闲车位</span><span class="value v-green">63</span></div>
+        <div class="parking-row"><span class="label">停机位</span><span class="value v-blue">6</span></div>
+        <div class="parking-row"><span class="label">摩托车位</span><span class="value v-blue">40</span></div>
+        <div class="park-bar-bg"><div class="park-bar-fill" id="parkFill"></div></div>
+      </div>
     </div>
 
-    <div class="panel right" id="pRecord">
+    <!-- 出入记录 -->
+    <div class="panel" id="pRecord">
       <div class="panel-title"><span class="dot"></span>出入记录</div>
-      <div class="record-wrap">
+      <div class="panel-body">
         <table class="record-table">
           <thead><tr><th>车牌号</th><th>类型</th><th>时间</th><th>通道</th></tr></thead>
           <tbody id="recordBody"></tbody>
@@ -600,21 +544,21 @@
       </div>
     </div>
 
-    <div class="panel right" id="pToday">
+    <!-- 今日数据 -->
+    <div class="panel" id="pToday">
       <div class="panel-title"><span class="dot"></span>今日数据</div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="label">今日游客</div><div class="value v-blue">156</div></div>
-        <div class="stat-card"><div class="label">入住民宿</div><div class="value v-green">12</div></div>
-        <div class="stat-card"><div class="label">垂钓预约</div><div class="value v-orange">28</div></div>
-        <div class="stat-card"><div class="label">今日收入</div><div class="value v-red">3.2<span style="font-size:12px">万</span></div></div>
+      <div class="panel-body">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">今日游客</div><div class="value v-blue">156</div></div>
+          <div class="stat-card"><div class="label">入住民宿</div><div class="value v-green">12</div></div>
+          <div class="stat-card"><div class="label">垂钓预约</div><div class="value v-orange">28</div></div>
+          <div class="stat-card"><div class="label">今日收入</div><div class="value v-red">3.2<span style="font-size:12px">万</span></div></div>
+        </div>
       </div>
     </div>
 
-    <div class="panel right" id="pTrend">
-      <div class="panel-title"><span class="dot"></span>月度游客趋势</div>
-      <div id="chartVisitor" class="chart-box"></div>
-    </div>
   </div>
+
 
   <!-- 建筑弹窗 -->
   <div id="infoPanel">
@@ -624,22 +568,77 @@
       <tr><td>名称</td><td id="pName">-</td></tr>
       <tr><td>用途</td><td id="pUsage">-</td></tr>
       <tr><td>层数</td><td id="pFloors">-</td></tr>
-      <tr><td>面积</td><td id="pArea">-</td></tr>
+      <tr><td>面积（㎡）</td><td id="pArea">-</td></tr>
       <tr><td>备注</td><td id="pRemark">-</td></tr>
     </table>
-    <button class="btn-minsu" id="btnMinsu" style="display:none" onclick="goToMinsu()">🏡 查看民宿详情 →</button>
+    <button class="btn-minsu" id="btnMinsu" style="display:none" onclick="goToMinsu()">查看民宿详情 →</button>
   </div>
 
-  <!-- 底部模块 -->
+    <!-- 底部栏 -->
   <div id="bottomBar">
-    <button class="module-btn" onclick="showModule('概况')"><div class="icon">🏘</div><div class="text">村庄概况</div></button>
-    <button class="module-btn" onclick="showModule('党建')"><div class="icon">🚩</div><div class="text">党政建设</div></button>
-    <button class="module-btn" onclick="showModule('垂钓')"><div class="icon">🎣</div><div class="text">垂钓赛事</div></button>
-    <button class="module-btn" onclick="showModule('民宿')"><div class="icon">🏡</div><div class="text">渔村民宿</div></button>
-    <button class="module-btn" onclick="showModule('招商')"><div class="icon">🤝</div><div class="text">招商服务</div></button>
-    <button class="module-btn" onclick="showModule('经济')"><div class="icon">📈</div><div class="text">经济运行</div></button>
-    <button class="module-btn" onclick="showModule('文旅')"><div class="icon">🌊</div><div class="text">农文旅游</div></button>
-    <button class="module-btn" onclick="showModule('生态')"><div class="icon">🌿</div><div class="text">生态监测</div></button>
+    <button class="module-btn active-btn" onclick="goToVillage()">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/VillageOverview.png" alt="">
+      </div>
+      <div class="text">村庄概况</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('党建')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/PartyBuilding.png" alt="">
+      </div>
+      <div class="text">党政建设</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('垂钓')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/FishingEvents.png" alt="">
+      </div>
+      <div class="text">垂钓赛事</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('民宿')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/YuMinMinSu.png" alt="">
+      </div>
+      <div class="text">渔村民宿</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('招商')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/InvestmentService.png" alt="">
+      </div>
+      <div class="text">招商服务</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('经济')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/EconomicOperation.png" alt="">
+      </div>
+      <div class="text">经济运行</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('文旅')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/Agri-CultureTourism.png" alt="">
+      </div>
+      <div class="text">农文旅游</div>
+    </button>
+
+    <button class="module-btn" onclick="showModule('生态')">
+      <div class="icon-wrap">
+        <img class="icon-base" src="./public/images/di2.png" alt="">
+        <img class="icon-img"  src="./public/images/EcoMonitoring.png" alt="">
+      </div>
+      <div class="text">生态监测</div>
+    </button>
   </div>
 
   <div id="cesiumContainer"></div>
@@ -676,34 +675,21 @@
         type:'line', smooth:true,
         lineStyle:{color:'#00e8c8',width:2},
         areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
-          {offset:0,color:'rgba(0,232,200,0.28)'},{offset:1,color:'rgba(0,232,200,0)'}
+          {offset:0,color:'rgba(0,232,200,0.28)'},
+          {offset:1,color:'rgba(0,232,200,0)'}
         ])},
         symbol:'circle', symbolSize:4,
         itemStyle:{color:'#00ffd0',borderColor:'#00e8c8'}
       }]
     });
 
-    // 土地利用（示例）
-    const chartLU = echarts.init(document.getElementById('chartLandUse'));
-    chartLU.setOption({
-      series:[{
-        type:'pie', radius:['40%','65%'], center:['50%','50%'],
-        label:{color:'rgba(220,240,255,0.70)',fontSize:10,formatter:'{b}\n{d}%'},
-        labelLine:{lineStyle:{color:'rgba(255,255,255,0.20)'}},
-        data:[
-          {value:680, name:'耕地'},
-          {value:1200,name:'水域'},
-          {value:800, name:'林地'},
-          {value:320, name:'建设用地'}
-        ]
-      }]
-    });
 
     // 月度游客（示例）
     const chartV = echarts.init(document.getElementById('chartVisitor'));
     chartV.setOption({
       grid:{ left:35, right:10, top:10, bottom:16 },
-      xAxis:{ type:'category', data:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+      xAxis:{ type:'category',
+        data:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
         axisLine:{lineStyle:{color:'rgba(255,255,255,0.20)'}},
         axisLabel:{color:'rgba(220,240,255,0.60)',fontSize:8}
       },
@@ -725,16 +711,17 @@
       }]
     });
 
-    window.addEventListener('resize',()=>{ chartWT.resize(); chartLU.resize(); chartV.resize(); });
+    window.addEventListener('resize',()=>{
+      chartWT.resize(); chartLU.resize(); chartV.resize();
+    });
 
     // ====== Cesium 初始化 ======
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI4MTZhMjYyMi04N2UyLTRkYTQtYjU1Ni01YTAzNDdkMTg3N2YiLCJpZCI6MjYyMjUwLCJpYXQiOjE3MzQwODUwMjN9.KwolqKTgIWZALmPGVrkP-lrrozvp1lOBvi7ygwJvLIE';
 
     const viewer = new Cesium.Viewer('cesiumContainer',{
       infoBox:false, selectionIndicator:true,
-      baseLayerPicker:false, geocoder:false,
-      homeButton:false, sceneModePicker:false,
-      navigationHelpButton:false, fullscreenButton:false,
+      baseLayerPicker:false, geocoder:false, homeButton:false,
+      sceneModePicker:false, navigationHelpButton:false, fullscreenButton:false,
       timeline:false, animation:false
     });
 
@@ -788,7 +775,7 @@
         document.getElementById('pName').textContent = name;
         document.getElementById('pUsage').textContent = usage;
         document.getElementById('pFloors').textContent = p['Floors'] ? p['Floors'].getValue() : '-';
-        document.getElementById('pArea').textContent   = p['Area_sqm'] ? p['Area_sqm'].getValue() : '-';
+        document.getElementById('pArea').textContent = p['Area_sqm'] ? p['Area_sqm'].getValue() : '-';
         document.getElementById('pRemark').textContent = p['Remark'] ? p['Remark'].getValue() : '-';
 
         document.getElementById('btnMinsu').style.display = (usage === '居住' || usage === '商业') ? 'block' : 'none';
@@ -800,6 +787,7 @@
 
     function closeInfoPanel(){ document.getElementById('infoPanel').style.display = 'none'; }
     function resetView(){ if(modelTileset) viewer.zoomTo(modelTileset); }
+
     let buildingsVisible = true;
     function toggleBuildings(){
       if(buildingDataSource){
@@ -807,23 +795,26 @@
         buildingDataSource.show = buildingsVisible;
       }
     }
+
     function togglePanels(){
       panelsVisible = !panelsVisible;
       document.getElementById('leftPanel').style.display = panelsVisible ? 'flex' : 'none';
       document.getElementById('rightPanel').style.display = panelsVisible ? 'flex' : 'none';
       document.getElementById('bottomBar').style.display = panelsVisible ? 'flex' : 'none';
     }
+
     function showModule(n){ alert('即将进入【'+n+'】模块（开发中）'); }
+    function goToVillage(){
+      window.location.href = './village.html';
+    }
     function goToMinsu(){ alert('即将跳转到民宿详情页面（开发中）'); }
 
     // ====== 出入记录：逐行丝滑上移 ======
     let recordTimer = null;
-
     async function initRecordsSmooth(){
       try{
         const res = await fetch('./public/data/records.json');
         const recordData = await res.json();
-
         const body = document.getElementById('recordBody');
         body.innerHTML = '';
 
@@ -832,7 +823,7 @@
           body.appendChild(createRecordRow(recordData[i]));
         }
 
-        const rowHeight = 28; // 与CSS一致
+        const rowHeight = 28;
         body.style.transition = 'transform 0.55s ease';
 
         recordTimer = setInterval(()=>{
@@ -841,7 +832,6 @@
           setTimeout(()=>{
             body.style.transition = 'none';
             body.style.transform = 'translateY(0)';
-
             const first = body.querySelector('tr');
             if(first) body.appendChild(first);
 
@@ -849,7 +839,6 @@
               body.style.transition = 'transform 0.55s ease';
             });
           }, 600);
-
         }, 1500);
 
       }catch(e){
@@ -865,7 +854,6 @@
 
     // ====== 鱼池轮播：读取 fishponds.json ======
     let pondTimer = null;
-
     async function initFishPondsCarousel(){
       try{
         const res = await fetch('./public/data/fishponds.json');
@@ -882,7 +870,6 @@
           document.getElementById('pondTemp').textContent = (p.temp ?? '-');
           document.getElementById('pondDo').textContent = (p.do ?? '-');
 
-          // 鱼数量显示优化：>=10000 显示“万尾”
           const fish = p.fish ?? '-';
           if (typeof fish === 'number') {
             document.getElementById('pondFish').textContent = fish >= 10000 ? (fish/10000).toFixed(1) + '万' : fish;
@@ -892,7 +879,6 @@
 
           document.getElementById('pondAnglers').textContent = (p.anglers ?? '-');
 
-          // 轻微高亮一下表示切换
           box.style.filter = 'brightness(1.10)';
           setTimeout(()=> box.style.filter = 'brightness(1)', 160);
 
