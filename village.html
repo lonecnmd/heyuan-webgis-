@@ -194,7 +194,7 @@
     /* ===== 右侧各模块高度 ===== */
     #pIndustry  { flex:0 0 auto; height:clamp(220px,28vh,280px); }
     #pEnterprise{ flex:1 1 auto; min-height:180px; }
-    #pResource  { flex:0 0 auto; height:clamp(160px,20vh,210px); }
+    #pResource  { flex:0 0 auto; height:clamp(110px,20vh,210px); }
 
     /* ===== 地图容器 ===== */
     #villageMap{
@@ -646,13 +646,31 @@
     </div>
 
 
-    <!-- 可改造房屋数量（趋势图） -->
+    <!-- 乡村特色资源 -->
     <div class="panel" id="pResource">
-      <div class="panel-title"><span class="dot"></span>可改造房屋数量</div>
-      <div class="panel-body">
-        <div id="chartRenovation" style="width:100%;height:100%;"></div>
-      </div>
+        <div class="panel-title"><span class="dot"></span>乡村特色资源</div>
+        <div class="panel-body">
+            <div class="resource-grid">
+                <div class="resource-card">
+                    <img class="rc-img" src="./public/images/resources/re1.png" alt="生态水域">
+                    <div class="ic-label" style="font-size:12px;">生态水域</div>
+
+                </div>
+                <div class="resource-card">
+                    <img class="rc-img" src="./public/images/resources/re2.png" alt="垂钓基地">
+                    <div class="ic-label" style="font-size:12px;">垂钓基地</div>
+
+                </div>
+                <div class="resource-card">
+                    <img class="rc-img" src="./public/images/resources/re3.png" alt="垂钓竞赛基地">
+                    <div class="ic-label" style="font-size:12px;">渔村民宿</div>
+
+                </div>
+
+            </div>
+        </div>
     </div>
+
 
   </div>
 
@@ -878,56 +896,7 @@
     function resetMapView(){
       map.setView([23.5, 113.8], 7);
     }
-    // ====== 可改造房屋数量趋势图（ECharts）======
 
-    // 1) 年份 2000-2020（共21个点）
-    const years = [];
-    for (let y = 2000; y <= 2020; y++) years.push(String(y));
-
-    // 2) 数据：1-20之间波动（示例，可自己改）
-    const vals = [6,7,9,8,10,12,11,14,13,15,16,14,17,18,16,19,20,18,17,19,16];
-
-    // 3) 初始化图表（注意：id 要和 HTML 容器一致）
-    const chartDom = document.getElementById('chartRenovation');
-    if (chartDom) {
-      const chartR = echarts.init(chartDom);
-
-      chartR.setOption({
-        grid: { left: 38, right: 12, top: 10, bottom: 26 },
-        xAxis: {
-          type: 'category',
-          data: years,
-          axisLabel: { color: 'rgba(220,240,255,0.60)', fontSize: 9, interval: 3 },
-          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.20)' } }
-        },
-        yAxis: {
-          type: 'value',
-          min: 0,
-          max: 20,
-          axisLabel: { color: 'rgba(220,240,255,0.60)', fontSize: 9 },
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.12)' } }
-        },
-        series: [{
-          name: '可改造数量',
-          type: 'line',
-          data: vals,
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 4,
-          lineStyle: { width: 2, color: '#00d7ff' },
-          itemStyle: { color: '#00ffd0' },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(0,215,255,0.28)' },
-              { offset: 1, color: 'rgba(0,215,255,0)' }
-            ])
-          }
-        }]
-      });
-
-      // 4) 自适应窗口变化
-      window.addEventListener('resize', () => chartR.resize());
-    }
 
   </script>
 </body>
