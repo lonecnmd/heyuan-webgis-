@@ -571,7 +571,17 @@
       <tr><td>面积（㎡）</td><td id="pArea">-</td></tr>
       <tr><td>备注</td><td id="pRemark">-</td></tr>
     </table>
-    <button class="btn-minsu" id="btnMinsu" style="display:none" onclick="goToMinsu()">查看民宿详情 →</button>
+    <div id="btnMinsuGroup" style="display:none; margin-top:10px;">
+        <div style="display:flex; gap:10px;">
+            <button onclick="goToMinsu()" style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(0,180,255,0.4); background:linear-gradient(135deg,rgba(0,60,100,0.7),rgba(0,120,160,0.5)); color:#dff6ff; cursor:pointer; font-size:14px;">
+                🏠 查看模型
+            </button>
+            <button onclick="goToPhotos()" style="flex:1; padding:10px; border-radius:10px; border:1px solid rgba(0,180,255,0.4); background:linear-gradient(135deg,rgba(0,60,100,0.7),rgba(0,120,160,0.5)); color:#dff6ff; cursor:pointer; font-size:14px;">
+                📷 查看照片
+            </button>
+        </div>
+    </div>
+
   </div>
 
     <!-- 底部栏 -->
@@ -728,6 +738,7 @@
     let buildingDataSource = null;
     let modelTileset = null;
     let panelsVisible = true;
+    let currentMinsu = null;
 
     async function loadModel(){
       try{
@@ -762,28 +773,58 @@
       }
     }
 
+// 民宿名称 → 模型路径 映射表
+const minsuModelMap = {
+    '改造民宿一': './public/model/model1.glb',
+    '改造民宿二': './public/model/model2.glb'
+};
+
+const minsuPhotoMap = {
+    '改造民宿一': {
+        folder: './public/images/minsu1/',
+        files: ['su1.png', 'su2.png', 'su3.png', 'su4.png']
+    },
+    '改造民宿二': {
+        folder: './public/images/minsu2/',
+        files: ['su1.png', 'su2.png', 'su3.png', 'su4.png']
+    }
+};
+
+
+
     // 点击建筑显示信息
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction(function(click){
-      const picked = viewer.scene.pick(click.position);
-      if(Cesium.defined(picked) && picked.id && picked.id.properties){
-        const p = picked.id.properties;
-        const name  = p['Name'] ? p['Name'].getValue() : '未命名';
-        const usage = p['Usage'] ? p['Usage'].getValue() : '-';
+        const picked = viewer.scene.pick(click.position);
+        if(Cesium.defined(picked) && picked.id && picked.id.properties){
+            const p = picked.id.properties;
+            const name = p['Name'] ? p['Name'].getValue() : '未命名';
+            const usage = p['Usage'] ? p['Usage'].getValue() : '-';
 
-        document.getElementById('buildingName').textContent = name;
-        document.getElementById('pName').textContent = name;
-        document.getElementById('pUsage').textContent = usage;
-        document.getElementById('pFloors').textContent = p['Floors'] ? p['Floors'].getValue() : '-';
-        document.getElementById('pArea').textContent = p['Area_sqm'] ? p['Area_sqm'].getValue() : '-';
-        document.getElementById('pRemark').textContent = p['Remark'] ? p['Remark'].getValue() : '-';
+            document.getElementById('buildingName').textContent = name;
+            document.getElementById('pName').textContent = name;
+            document.getElementById('pUsage').textContent = usage;
+            document.getElementById('pFloors').textContent = p['Floors'] ? p['Floors'].getValue() : '-';
+            document.getElementById('pArea').textContent = p['Area_sqm'] ? p['Area_sqm'].getValue() : '-';
+            document.getElementById('pRemark').textContent = p['Remark'] ? p['Remark'].getValue() : '-';
 
-        document.getElementById('btnMinsu').style.display = (usage === '居住' || usage === '商业') ? 'block' : 'none';
-        document.getElementById('infoPanel').style.display = 'block';
-      }else{
-        document.getElementById('infoPanel').style.display = 'none';
-      }
+            // 查找该建筑对应的模型路径
+            const modelUrl = minsuModelMap[name] || null;
+
+            // 只有民宿且有模型时才显示"查看民宿详情"按钮
+            const isMinsu = (usage === '酒店住宿');
+            const photoData = minsuPhotoMap[name] || null;
+            currentMinsu = { name, modelUrl, photoData };
+
+            document.getElementById('btnMinsuGroup').style.display = isMinsu ? 'block' : 'none';
+
+            document.getElementById('infoPanel').style.display = 'block';
+        }else{
+            document.getElementById('infoPanel').style.display = 'none';
+            currentMinsu = null;
+        }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
 
     function closeInfoPanel(){ document.getElementById('infoPanel').style.display = 'none'; }
     function resetView(){ if(modelTileset) viewer.zoomTo(modelTileset); }
@@ -807,7 +848,28 @@
     function goToVillage(){
       window.location.href = './village.html';
     }
-    function goToMinsu(){ alert('即将跳转到民宿详情页面（开发中）'); }
+    function goToMinsu(){
+        if(!currentMinsu || !currentMinsu.modelUrl){
+            alert('未配置该建筑的模型路径');
+            return;
+        }
+        // 用 localStorage 传参，避免 URL 编码问题
+        localStorage.setItem('minsu_name', currentMinsu.name);
+        localStorage.setItem('minsu_model', currentMinsu.modelUrl);
+        window.location.href = './minsu.html';
+    }
+
+    function goToPhotos(){
+        if(!currentMinsu || !currentMinsu.photoData){
+            alert('未配置该建筑的照片');
+            return;
+        }
+        localStorage.setItem('minsu_name', currentMinsu.name);
+        localStorage.setItem('minsu_photos', JSON.stringify(currentMinsu.photoData));
+        window.location.href = './photos.html';
+    }
+
+
 
     // ====== 出入记录：逐行丝滑上移 ======
     let recordTimer = null;
