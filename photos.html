@@ -11,88 +11,42 @@
       font-family:"Microsoft YaHei",sans-serif;
     }
 
-    /* 顶部栏 */
     .topbar {
-      position:fixed; left:0; top:0; right:0; height:56px;
-      display:flex; align-items:center; padding:0 16px;
-      background:rgba(7,20,39,0.85);
-      border-bottom:1px solid rgba(0,180,255,0.15);
-      backdrop-filter:blur(10px);
-      z-index:20;
+      position:fixed; left:12px; top:12px; right:12px;
+      display:flex; gap:10px; align-items:center; z-index:10;
+      pointer-events:none;
     }
     .btn {
-      padding:8px 16px; border-radius:8px;
+      pointer-events:auto;
+      padding:10px 18px; border-radius:10px;
       border:1px solid rgba(0,180,255,0.35);
       background:rgba(0,40,80,0.65); color:#dff6ff;
       cursor:pointer; font-size:14px;
+      backdrop-filter: blur(8px);
       transition: background 0.3s;
     }
     .btn:hover { background:rgba(0,80,140,0.75); }
     .title {
-      margin-left:16px; color:rgba(220,240,255,0.85); font-size:18px;
+      margin-left:auto; color:rgba(220,240,255,0.85); font-size:18px;
       text-shadow:0 0 12px rgba(0,180,255,0.25);
-    }
-    .page-info {
-      margin-left:auto; color:#88ccff; font-size:14px;
+      pointer-events:none;
     }
 
-    /* 主图区域 */
-    .main-photo {
-      position:absolute; top:56px; bottom:120px; left:0; right:0;
+    .photo-container {
+      position:absolute; inset:0;
       display:flex; justify-content:center; align-items:center;
-      padding:20px;
+      padding:70px 20px 20px 20px;
     }
-    .main-photo img {
-      max-width:100%; max-height:100%;
+    .photo-container img {
+      max-width:100%;
+      max-height:100%;
       object-fit:contain;
       border-radius:12px;
-      border:2px solid rgba(0,180,255,0.2);
+      border:2px solid rgba(0,180,255,0.25);
       box-shadow:0 0 40px rgba(0,120,200,0.15);
       background:#0a1e35;
-      transition: opacity 0.3s;
     }
 
-    /* 左右切换按钮 */
-    .nav-btn {
-      position:absolute; top:50%; transform:translateY(-50%);
-      width:50px; height:50px; border-radius:50%;
-      border:1px solid rgba(0,180,255,0.3);
-      background:rgba(0,40,80,0.6); color:#dff6ff;
-      font-size:24px; cursor:pointer;
-      display:flex; justify-content:center; align-items:center;
-      transition: background 0.3s;
-      z-index:15;
-    }
-    .nav-btn:hover { background:rgba(0,100,180,0.7); }
-    .nav-prev { left:20px; }
-    .nav-next { right:20px; }
-
-    /* 底部缩略图 */
-    .thumbnails {
-      position:absolute; bottom:0; left:0; right:0; height:120px;
-      display:flex; justify-content:center; align-items:center;
-      gap:12px; padding:10px 20px;
-      background:rgba(7,20,39,0.85);
-      border-top:1px solid rgba(0,180,255,0.15);
-      backdrop-filter:blur(10px);
-      overflow-x:auto;
-    }
-    .thumb {
-      width:90px; height:90px; border-radius:8px;
-      object-fit:cover; cursor:pointer;
-      border:2px solid rgba(0,180,255,0.15);
-      opacity:0.5;
-      transition: all 0.3s;
-      flex-shrink:0;
-    }
-    .thumb:hover { opacity:0.8; }
-    .thumb.active {
-      border-color:#00b4ff;
-      opacity:1;
-      box-shadow:0 0 15px rgba(0,180,255,0.3);
-    }
-
-    /* 加载遮罩 */
     #loadingOverlay {
       position:fixed; inset:0; z-index:100;
       display:flex; flex-direction:column;
@@ -116,121 +70,47 @@
     <div>正在加载照片...</div>
   </div>
 
-  <!-- 顶部栏 -->
   <div class="topbar">
     <button class="btn" id="btnBack">← 返回上一页</button>
     <div class="title" id="title"></div>
-    <div class="page-info" id="pageInfo"></div>
   </div>
 
-  <!-- 主图 -->
-  <div class="main-photo">
-    <button class="nav-btn nav-prev" id="btnPrev">❮</button>
-    <img id="mainImg" alt="民宿照片" />
-    <button class="nav-btn nav-next" id="btnNext">❯</button>
+  <div class="photo-container">
+    <img id="photoImg" alt="民宿照片" />
   </div>
-
-  <!-- 缩略图 -->
-  <div class="thumbnails" id="thumbsContainer"></div>
 
   <script>
     var name = localStorage.getItem('minsu_name') || '民宿';
-    var photosJson = localStorage.getItem('minsu_photos');
+    var photoUrl = localStorage.getItem('minsu_photo');
 
     document.getElementById('title').textContent = name + ' - 效果图';
     document.getElementById('btnBack').onclick = function(){ history.back(); };
 
     console.log('照片名称:', name);
-    console.log('照片数据:', photosJson);
+    console.log('照片路径:', photoUrl);
 
-    // 解析照片列表
-    var photoUrls = [];
-    if (photosJson) {
-      try {
-        var data = JSON.parse(photosJson);
-        var folder = data.folder || '';
-        var files = data.files || [];
-        for (var i = 0; i < files.length; i++) {
-          photoUrls.push(folder + files[i]);
-        }
-      } catch(e) {
-        console.error('照片数据解析失败:', e);
-      }
-    }
-
-    if (photoUrls.length === 0) {
+    if (!photoUrl) {
       document.getElementById('loadingOverlay').innerHTML =
-        '<div style="color:#ff6666;font-size:20px;">❌ 没有照片数据</div>' +
-        '<button onclick="history.back()" style="margin-top:20px;padding:10px 20px;cursor:pointer;border-radius:8px;border:1px solid #00b4ff;background:#0a2a4a;color:#dff6ff;">返回</button>';
-      throw new Error('No photos');
+        '<div style="color:#ff6666;font-size:20px;">❌ 缺少照片路径</div>' +
+        '<button onclick="history.back()" style="margin-top:20px;padding:10px 20px;cursor:pointer;">返回</button>';
+    } else {
+      var img = document.getElementById('photoImg');
+
+      img.onload = function() {
+        console.log('✅ 照片加载成功');
+        document.getElementById('loadingOverlay').style.display = 'none';
+      };
+
+      img.onerror = function() {
+        console.error('❌ 照片加载失败');
+        document.getElementById('loadingOverlay').innerHTML =
+          '<div style="color:#ff6666;font-size:18px;">❌ 照片加载失败</div>' +
+          '<div style="color:#ffaa66;font-size:14px;margin-top:10px;">路径: ' + photoUrl + '</div>' +
+          '<button onclick="history.back()" style="margin-top:20px;padding:10px 20px;cursor:pointer;border-radius:8px;border:1px solid #00b4ff;background:#0a2a4a;color:#dff6ff;">返回</button>';
+      };
+
+      img.src = photoUrl;
     }
-
-    // 当前显示的图片索引
-    var currentIndex = 0;
-
-    // 创建缩略图
-    var thumbsContainer = document.getElementById('thumbsContainer');
-    var thumbElements = [];
-
-    for (var i = 0; i < photoUrls.length; i++) {
-      (function(index) {
-        var thumb = document.createElement('img');
-        thumb.className = 'thumb';
-        thumb.src = photoUrls[index];
-        thumb.onclick = function() { showPhoto(index); };
-        thumbsContainer.appendChild(thumb);
-        thumbElements.push(thumb);
-      })(i);
-    }
-
-    // 显示指定图片
-    var mainImg = document.getElementById('mainImg');
-    var pageInfo = document.getElementById('pageInfo');
-
-    function showPhoto(index) {
-      if (index < 0) index = photoUrls.length - 1;
-      if (index >= photoUrls.length) index = 0;
-      currentIndex = index;
-
-      mainImg.src = photoUrls[currentIndex];
-      pageInfo.textContent = (currentIndex + 1) + ' / ' + photoUrls.length;
-
-      // 更新缩略图高亮
-      for (var i = 0; i < thumbElements.length; i++) {
-        if (i === currentIndex) {
-          thumbElements[i].className = 'thumb active';
-        } else {
-          thumbElements[i].className = 'thumb';
-        }
-      }
-    }
-
-    // 初始显示第一张
-    showPhoto(0);
-
-    // 主图加载完成后隐藏遮罩
-    var loadedCount = 0;
-    mainImg.onload = function() {
-      document.getElementById('loadingOverlay').style.display = 'none';
-    };
-    mainImg.onerror = function() {
-      console.error('❌ 图片加载失败:', photoUrls[currentIndex]);
-      document.getElementById('loadingOverlay').style.display = 'none';
-    };
-
-    // 左右切换
-    document.getElementById('btnPrev').onclick = function() {
-      showPhoto(currentIndex - 1);
-    };
-    document.getElementById('btnNext').onclick = function() {
-      showPhoto(currentIndex + 1);
-    };
-
-    // 键盘左右箭头切换
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowLeft') showPhoto(currentIndex - 1);
-      if (e.key === 'ArrowRight') showPhoto(currentIndex + 1);
-    });
   </script>
 </body>
 </html>
