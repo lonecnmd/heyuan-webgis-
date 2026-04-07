@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>民宿模型查看</title>
+  <style>
+    html, body { margin:0; height:100%; overflow:hidden; background:#071427; font-family:"Microsoft YaHei",sans-serif; }
+    #c { width:100%; height:100%; display:block; }
+
+    .topbar {
+      position:fixed; left:12px; top:12px; right:12px;
+      display:flex; gap:10px; align-items:center; z-index:10;
+      pointer-events:none;
+    }
+    .btn {
+      pointer-events:auto;
+      padding:10px 18px; border-radius:10px; border:1px solid rgba(0,180,255,0.35);
+      background:rgba(0,40,80,0.65); color:#dff6ff; cursor:pointer;
+      font-size:14px;
+      backdrop-filter: blur(8px);
+      transition: background 0.3s;
+    }
+    .btn:hover { background:rgba(0,80,140,0.75); }
+    .title {
+      margin-left:auto; color:rgba(220,240,255,0.85); font-size:18px;
+      text-shadow:0 0 12px rgba(0,180,255,0.25);
+      pointer-events:none;
+    }
+
+    #loadingOverlay {
+      position:fixed; inset:0; z-index:100;
+      display:flex; flex-direction:column;
+      justify-content:center; align-items:center;
+      background:rgba(7,20,39,0.92);
+      color:#dff6ff; font-size:18px;
+    }
+    #loadingOverlay .spinner {
+      width:50px; height:50px; border:4px solid rgba(0,180,255,0.2);
+      border-top:4px solid #00b4ff; border-radius:50%;
+      animation: spin 1s linear infinite; margin-bottom:20px;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #loadingProgress { margin-top:10px; font-size:14px; color:#88ccff; }
+  </style>
+</head>
+
+<body>
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div>正在加载模型...</div>
+    <div id="loadingProgress"></div>
+  </div>
+
+  <div class="topbar">
+    <button class="btn" id="btnBack">← 返回上一页</button>
+    <button class="btn" id="btnReset">复位模型</button>
+    <div class="title" id="title"></div>
+  </div>
+
+  <canvas id="c"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    // ========== 读取参数 ==========
+    var name = localStorage.getItem('minsu_name') || '民宿模型';
+
+    var modelUrl = localStorage.getItem('minsu_model');
+
+    document.getElementById('title').textContent = name;
+    document.getElementById('btnBack').onclick = function(){ history.back(); };
+
+    console.log('模型名称:', name);
+    console.log('模型路径:', modelUrl);
+
+    if (!modelUrl) {
+      document.getElementById('loadingOverlay').innerHTML =
+        '<div style="color:#ff6666;font-size:20px;">❌ 缺少模型路径参数</div>' +
+        '<button onclick="history.back()" style="margin-top:20px;padding:10px 20px;cursor:pointer;">返回</button>';
+      throw new Error('Missing model url');
+    }
+
+    // ========== 初始化 ==========
+    var canvas = document.getElementById('c');
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x071427);
+
+    var grid = new THREE.GridHelper(100, 100, 0x224466, 0x112233);
+    scene.add(grid);
+
+    var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 100000);
+    camera.position.set(5, 3, 5);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+
+    // ========== 灯光 ==========
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    var dir1 = new THREE.DirectionalLight(0xffffff, 1.0);
+    dir1.position.set(5, 10, 7);
+    scene.add(dir1);
+    var dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dir2.position.set(-5, 5, -5);
+    scene.add(dir2);
+    scene.add(new THREE.HemisphereLight(0x8888ff, 0x444422, 0.6));
+
+    // ========== 相机适配 ==========
+    var root = null;
+
+    function fitCameraToObject(obj, offset) {
+      offset = offset || 1.5;
+      var box = new THREE.Box3().setFromObject(obj);
+      var size = box.getSize(new THREE.Vector3());
+      var center = box.getCenter(new THREE.Vector3());
+
+      console.log('模型包围盒 size:', size);
+      console.log('模型包围盒 center:', center);
+
+      var maxSize = Math.max(size.x, size.y, size.z);
+      if (maxSize === 0) {
+        console.warn('模型尺寸为0');
+        return;
+      }
+
+      var fov = camera.fov * (Math.PI / 180);
+      var fitDist = maxSize / (2 * Math.tan(fov / 2));
+      var distance = offset * fitDist;
+
+      var direction = new THREE.Vector3(1, 0.6, 1).normalize();
+      var newPos = center.clone().add(direction.multiplyScalar(distance));
+
+      camera.position.copy(newPos);
+      camera.near = distance / 1000;
+      camera.far = distance * 100;
+      camera.updateProjectionMatrix();
+
+      controls.target.copy(center);
+      controls.update();
+
+      grid.position.set(center.x, box.min.y, center.z);
+    }
+
+    // ========== 加载模型 ==========
+    var loader = new THREE.GLTFLoader();
+    console.log('开始加载模型:', modelUrl);
+
+    loader.load(
+      modelUrl,
+      function(gltf) {
+        console.log('✅ 模型加载成功！');
+        console.log('场景子对象数量:', gltf.scene.children.length);
+        root = gltf.scene;
+
+        // 居中
+        var box = new THREE.Box3().setFromObject(root);
+        var center = box.getCenter(new THREE.Vector3());
+        root.position.sub(center);
+
+        // 默认材质 + 双面
+        root.traverse(function(child) {
+          if (child.isMesh) {
+            if (!child.material) {
+              child.material = new THREE.MeshStandardMaterial({ color: 0xaabbcc });
+            }
+            if (Array.isArray(child.material)) {
+              child.material.forEach(function(m) { m.side = THREE.DoubleSide; });
+            } else {
+              child.material.side = THREE.DoubleSide;
+            }
+          }
+        });
+
+        scene.add(root);
+        fitCameraToObject(root);
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+      },
+      function(progress) {
+        if (progress.total > 0) {
+          var pct = Math.round((progress.loaded / progress.total) * 100);
+          document.getElementById('loadingProgress').textContent = pct + '%';
+          console.log('加载进度:', pct + '%');
+        }
+      },
+      function(err) {
+        console.error('❌ 模型加载失败:', err);
+        document.getElementById('loadingOverlay').innerHTML =
+          '<div style="color:#ff6666;font-size:18px;">❌ 模型加载失败</div>' +
+          '<div style="color:#ffaa66;font-size:14px;margin-top:10px;">路径: ' + modelUrl + '</div>' +
+          '<div style="color:#88aacc;font-size:13px;margin-top:10px;">请检查文件是否存在</div>' +
+          '<button onclick="history.back()" style="margin-top:20px;padding:10px 20px;cursor:pointer;border-radius:8px;border:1px solid #00b4ff;background:#0a2a4a;color:#dff6ff;">返回</button>';
+      }
+    );
+
+    // ========== 复位 ==========
+    document.getElementById('btnReset').onclick = function() {
+      if (root) fitCameraToObject(root);
+    };
+
+    // ========== 窗口缩放 ==========
+    window.addEventListener('resize', function() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ========== 渲染循环 ==========
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
