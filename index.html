@@ -780,14 +780,8 @@ const minsuModelMap = {
 };
 
 const minsuPhotoMap = {
-    '改造民宿一': {
-        folder: './public/images/minsu1/',
-        files: ['su1.png', 'su2.png', 'su3.png', 'su4.png']
-    },
-    '改造民宿二': {
-        folder: './public/images/minsu2/',
-        files: ['su1.png', 'su2.png', 'su3.png', 'su4.png']
-    }
+    '改造民宿一': './public/images/minsu1/su1.png',
+    '改造民宿二': './public/images/minsu2/su1.png'
 };
 
 
@@ -813,8 +807,8 @@ const minsuPhotoMap = {
 
             // 只有民宿且有模型时才显示"查看民宿详情"按钮
             const isMinsu = (usage === '酒店住宿');
-            const photoData = minsuPhotoMap[name] || null;
-            currentMinsu = { name, modelUrl, photoData };
+            const photoUrl = minsuPhotoMap[name] || null;
+            currentMinsu = { name, modelUrl, photoUrl };
 
             document.getElementById('btnMinsuGroup').style.display = isMinsu ? 'block' : 'none';
 
@@ -860,12 +854,12 @@ const minsuPhotoMap = {
     }
 
     function goToPhotos(){
-        if(!currentMinsu || !currentMinsu.photoData){
+        if(!currentMinsu || !currentMinsu.photoUrl){
             alert('未配置该建筑的照片');
             return;
         }
         localStorage.setItem('minsu_name', currentMinsu.name);
-        localStorage.setItem('minsu_photos', JSON.stringify(currentMinsu.photoData));
+        localStorage.setItem('minsu_photo', currentMinsu.photoUrl);
         window.location.href = './photos.html';
     }
 
