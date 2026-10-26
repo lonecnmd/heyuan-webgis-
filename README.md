@@ -14,7 +14,7 @@
 ## 📸 界面预览
 
 *(请在此处替换为你本地的截图路径，例如：)*
-![Platform Screenshot](./assets/screenshot.png)
+![Platform Screenshot](./public/images/screenshot.png)
 
 ## ✨ 核心功能
 
